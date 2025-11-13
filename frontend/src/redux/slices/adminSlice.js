@@ -142,6 +142,31 @@ export const deleteAssignment = createAsyncThunk(
 
 // ==================== FEED MODERATION ====================
 
+export const fetchAllPosts = createAsyncThunk(
+  'admin/fetchAllPosts',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const queryParams = new URLSearchParams(params).toString();
+      const { data } = await api.get(`/admin/feeds${queryParams ? '?' + queryParams : ''}`);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch posts');
+    }
+  }
+);
+
+export const moderatePost = createAsyncThunk(
+  'admin/moderatePost',
+  async ({ postId, isHidden, reason }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.patch(`/admin/feeds/${postId}/flag`, { isHidden, reason });
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to moderate post');
+    }
+  }
+);
+
 export const flagPost = createAsyncThunk(
   'admin/flagPost',
   async ({ postId, isHidden, reason }, { rejectWithValue }) => {
@@ -164,6 +189,48 @@ export const fetchAllPayments = createAsyncThunk(
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch payments');
+    }
+  }
+);
+
+export const issueRefund = createAsyncThunk(
+  'admin/issueRefund',
+  async ({ paymentId, reason }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.patch(`/admin/payments/${paymentId}/refund`, { reason });
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to issue refund');
+    }
+  }
+);
+
+// ==================== SETTINGS ====================
+// Note: Settings are typically environment variables, not database values
+// These actions are placeholders for the UI
+
+export const fetchSettings = createAsyncThunk(
+  'admin/fetchSettings',
+  async (_, { rejectWithValue }) => {
+    try {
+      // Settings are environment variables, return empty object
+      // In a real app, you might fetch some config from backend
+      return {};
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch settings');
+    }
+  }
+);
+
+export const updateSettings = createAsyncThunk(
+  'admin/updateSettings',
+  async (settings, { rejectWithValue }) => {
+    try {
+      // In a real app, you would update .env or config here
+      // For now, just return the settings
+      return settings;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update settings');
     }
   }
 );
@@ -206,6 +273,18 @@ export const fetchRevenueAnalytics = createAsyncThunk(
   }
 );
 
+export const fetchEngagementStats = createAsyncThunk(
+  'admin/fetchEngagementStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get('/admin/analytics/engagement');
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch engagement stats');
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: 'admin',
   initialState: {
@@ -234,6 +313,14 @@ const adminSlice = createSlice({
       loading: false,
       error: null,
     },
+    posts: {
+      list: [],
+      total: 0,
+      currentPage: 1,
+      totalPages: 1,
+      loading: false,
+      error: null,
+    },
     payments: {
       list: [],
       total: 0,
@@ -247,6 +334,12 @@ const adminSlice = createSlice({
       overview: null,
       userGrowth: [],
       revenue: null,
+      engagement: null,
+      loading: false,
+      error: null,
+    },
+    settings: {
+      data: {},
       loading: false,
       error: null,
     },
@@ -256,8 +349,10 @@ const adminSlice = createSlice({
       state.users.error = null;
       state.courses.error = null;
       state.assignments.error = null;
+      state.posts.error = null;
       state.payments.error = null;
       state.analytics.error = null;
+      state.settings.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -348,6 +443,29 @@ const adminSlice = createSlice({
         state.assignments.list = state.assignments.list.filter((a) => a._id !== action.payload);
         state.assignments.total -= 1;
       })
+      // Fetch All Posts
+      .addCase(fetchAllPosts.pending, (state) => {
+        state.posts.loading = true;
+        state.posts.error = null;
+      })
+      .addCase(fetchAllPosts.fulfilled, (state, action) => {
+        state.posts.loading = false;
+        state.posts.list = action.payload.data;
+        state.posts.total = action.payload.pagination?.total || 0;
+        state.posts.currentPage = action.payload.pagination?.page || 1;
+        state.posts.totalPages = action.payload.pagination?.pages || 1;
+      })
+      .addCase(fetchAllPosts.rejected, (state, action) => {
+        state.posts.loading = false;
+        state.posts.error = action.payload;
+      })
+      // Moderate Post
+      .addCase(moderatePost.fulfilled, (state, action) => {
+        const index = state.posts.list.findIndex((p) => p._id === action.payload._id);
+        if (index !== -1) {
+          state.posts.list[index] = action.payload;
+        }
+      })
       // Fetch All Payments
       .addCase(fetchAllPayments.pending, (state) => {
         state.payments.loading = true;
@@ -364,6 +482,13 @@ const adminSlice = createSlice({
       .addCase(fetchAllPayments.rejected, (state, action) => {
         state.payments.loading = false;
         state.payments.error = action.payload;
+      })
+      // Issue Refund
+      .addCase(issueRefund.fulfilled, (state, action) => {
+        const index = state.payments.list.findIndex((p) => p._id === action.payload._id);
+        if (index !== -1) {
+          state.payments.list[index] = action.payload;
+        }
       })
       // Analytics - Overview
       .addCase(fetchPlatformOverview.pending, (state) => {
@@ -385,6 +510,26 @@ const adminSlice = createSlice({
       // Analytics - Revenue
       .addCase(fetchRevenueAnalytics.fulfilled, (state, action) => {
         state.analytics.revenue = action.payload;
+      })
+      // Analytics - Engagement
+      .addCase(fetchEngagementStats.fulfilled, (state, action) => {
+        state.analytics.engagement = action.payload;
+      })
+      // Settings
+      .addCase(fetchSettings.pending, (state) => {
+        state.settings.loading = true;
+        state.settings.error = null;
+      })
+      .addCase(fetchSettings.fulfilled, (state, action) => {
+        state.settings.loading = false;
+        state.settings.data = action.payload;
+      })
+      .addCase(fetchSettings.rejected, (state, action) => {
+        state.settings.loading = false;
+        state.settings.error = action.payload;
+      })
+      .addCase(updateSettings.fulfilled, (state, action) => {
+        state.settings.data = action.payload;
       });
   },
 });

@@ -26,9 +26,9 @@ import {
   Cell,
 } from 'recharts';
 import {
-  fetchDashboardStats,
+  fetchPlatformOverview,
   fetchUserGrowth,
-  fetchRevenueStats,
+  fetchRevenueAnalytics,
   fetchEngagementStats,
 } from '../../redux/slices/adminSlice';
 import { Card, Loader, Badge } from '../../components/ui';
@@ -38,9 +38,9 @@ const AnalyticsPage = () => {
   const { analytics } = useSelector((state) => state.admin);
 
   useEffect(() => {
-    dispatch(fetchDashboardStats());
+    dispatch(fetchPlatformOverview());
     dispatch(fetchUserGrowth());
-    dispatch(fetchRevenueStats());
+    dispatch(fetchRevenueAnalytics());
     dispatch(fetchEngagementStats());
   }, [dispatch]);
 
@@ -136,28 +136,28 @@ const AnalyticsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Total Users"
-            value={formatNumber(analytics.stats?.totalUsers)}
+            value={formatNumber(analytics.overview?.stats?.totalUsers)}
             icon={Users}
             color="blue"
             trend="+12% this month"
           />
           <StatCard
             title="Total Revenue"
-            value={formatCurrency(analytics.stats?.totalRevenue)}
+            value={formatCurrency(analytics.overview?.stats?.totalRevenue)}
             icon={DollarSign}
             color="green"
             trend="+8% this month"
           />
           <StatCard
             title="Active Courses"
-            value={formatNumber(analytics.stats?.totalCourses)}
+            value={formatNumber(analytics.overview?.stats?.totalCourses)}
             icon={Activity}
             color="purple"
             trend="+5 new courses"
           />
           <StatCard
             title="Assignments"
-            value={formatNumber(analytics.stats?.totalAssignments)}
+            value={formatNumber(analytics.overview?.stats?.totalAssignments)}
             icon={Activity}
             color="orange"
             trend="+15 this month"
@@ -175,7 +175,7 @@ const AnalyticsPage = () => {
               <AreaChart
                 data={
                   analytics.userGrowth?.map((item) => ({
-                    month: item.month || item._id || 'N/A',
+                    month: `${item._id?.month || 'N/A'}/${item._id?.year || ''}`,
                     users: item.count || 0,
                   })) || []
                 }
@@ -210,9 +210,9 @@ const AnalyticsPage = () => {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={
-                  analytics.revenue?.map((item) => ({
-                    month: item.month || item._id || 'N/A',
-                    revenue: item.total || 0,
+                  analytics.revenue?.revenueByMonth?.map((item) => ({
+                    month: `${item._id?.month || 'N/A'}/${item._id?.year || ''}`,
+                    revenue: item.revenue || 0,
                   })) || []
                 }
               >
@@ -239,19 +239,19 @@ const AnalyticsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-6 bg-blue-50 rounded-lg">
               <p className="text-blue-600 text-3xl font-bold">
-                {formatNumber(analytics.engagement?.totalPosts)}
+                {formatNumber(analytics.engagement?.totals?.posts || analytics.overview?.stats?.totalPosts)}
               </p>
               <p className="text-gray-600 text-sm mt-2">Total Community Posts</p>
             </div>
             <div className="text-center p-6 bg-purple-50 rounded-lg">
               <p className="text-purple-600 text-3xl font-bold">
-                {formatNumber(analytics.engagement?.totalLikes)}
+                {formatNumber(analytics.engagement?.totals?.likes || 0)}
               </p>
               <p className="text-gray-600 text-sm mt-2">Total Likes</p>
             </div>
             <div className="text-center p-6 bg-green-50 rounded-lg">
               <p className="text-green-600 text-3xl font-bold">
-                {formatNumber(analytics.engagement?.totalComments)}
+                {formatNumber(analytics.engagement?.totals?.comments || 0)}
               </p>
               <p className="text-gray-600 text-sm mt-2">Total Comments</p>
             </div>
@@ -261,10 +261,10 @@ const AnalyticsPage = () => {
         {/* Course Performance */}
         <Card className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">
-            Top Performing Courses
+            Top Performing Courses (By Revenue)
           </h2>
           <div className="space-y-4">
-            {analytics.stats?.topCourses?.slice(0, 5).map((course, index) => (
+            {analytics.revenue?.topCourses?.slice(0, 5).map((course, index) => (
               <div
                 key={course._id || index}
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
@@ -275,16 +275,16 @@ const AnalyticsPage = () => {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">
-                      {course.title || 'Unknown Course'}
+                      Course ID: {course._id || 'Unknown'}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {course.enrolledStudents?.length || 0} students enrolled
+                      {course.enrollments || 0} enrollments
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-gray-900">
-                    {formatCurrency(course.price * (course.enrolledStudents?.length || 0))}
+                    {formatCurrency(course.revenue)}
                   </p>
                   <p className="text-xs text-gray-500">Total Revenue</p>
                 </div>
@@ -307,9 +307,9 @@ const AnalyticsPage = () => {
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Students', value: analytics.stats?.studentCount || 0 },
-                    { name: 'Tutors', value: analytics.stats?.tutorCount || 0 },
-                    { name: 'Admins', value: analytics.stats?.adminCount || 0 },
+                    { name: 'Students', value: analytics.overview?.stats?.totalStudents || 0 },
+                    { name: 'Tutors', value: analytics.overview?.stats?.totalTutors || 0 },
+                    { name: 'Admins', value: (analytics.overview?.stats?.totalUsers || 0) - (analytics.overview?.stats?.totalStudents || 0) - (analytics.overview?.stats?.totalTutors || 0) },
                   ]}
                   cx="50%"
                   cy="50%"
@@ -335,21 +335,21 @@ const AnalyticsPage = () => {
                 <div className="w-4 h-4 rounded-full bg-green-500 mx-auto mb-1"></div>
                 <p className="text-xs text-gray-600">Students</p>
                 <p className="font-bold text-gray-900">
-                  {formatNumber(analytics.stats?.studentCount)}
+                  {formatNumber(analytics.overview?.stats?.totalStudents)}
                 </p>
               </div>
               <div className="text-center">
                 <div className="w-4 h-4 rounded-full bg-blue-500 mx-auto mb-1"></div>
                 <p className="text-xs text-gray-600">Tutors</p>
                 <p className="font-bold text-gray-900">
-                  {formatNumber(analytics.stats?.tutorCount)}
+                  {formatNumber(analytics.overview?.stats?.totalTutors)}
                 </p>
               </div>
               <div className="text-center">
                 <div className="w-4 h-4 rounded-full bg-red-500 mx-auto mb-1"></div>
                 <p className="text-xs text-gray-600">Admins</p>
                 <p className="font-bold text-gray-900">
-                  {formatNumber(analytics.stats?.adminCount)}
+                  {formatNumber((analytics.overview?.stats?.totalUsers || 0) - (analytics.overview?.stats?.totalStudents || 0) - (analytics.overview?.stats?.totalTutors || 0))}
                 </p>
               </div>
             </div>
@@ -362,10 +362,10 @@ const AnalyticsPage = () => {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart
                 data={
-                  analytics.userGrowth?.map((item, index) => ({
-                    month: item.month || item._id || 'N/A',
-                    posts: Math.floor(Math.random() * 50) + 10, // Mock data - replace with real
-                    interactions: Math.floor(Math.random() * 200) + 50, // Mock data
+                  analytics.engagement?.engagementByMonth?.map((item) => ({
+                    month: `${item._id?.month || 'N/A'}/${item._id?.year || ''}`,
+                    posts: item.posts || 0,
+                    interactions: (item.totalLikes || 0) + (item.totalComments || 0),
                   })) || []
                 }
               >
@@ -388,7 +388,7 @@ const AnalyticsPage = () => {
                   stroke={COLORS.indigo}
                   strokeWidth={2}
                   dot={{ r: 4 }}
-                  name="Interactions"
+                  name="Interactions (Likes + Comments)"
                 />
               </LineChart>
             </ResponsiveContainer>
