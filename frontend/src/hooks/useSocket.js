@@ -1,3 +1,4 @@
+// frontend/src/hooks/useSocket.js
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import socketService from '../services/socket';

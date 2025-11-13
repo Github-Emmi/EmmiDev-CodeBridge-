@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  profilePicture: {
+    type: String,
+    default: ''
+  },
   verifiedTutor: {
     type: Boolean,
     default: false
@@ -68,6 +72,19 @@ userSchema.pre('save', async function(next) {
   }
   const salt = await bcrypt.genSalt(10);
   this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+});
+
+// Sync profilePicture and avatarUrl
+userSchema.pre('save', function(next) {
+  // If profilePicture is set but not avatarUrl, sync them
+  if (this.profilePicture && !this.avatarUrl) {
+    this.avatarUrl = this.profilePicture;
+  }
+  // If avatarUrl is set but not profilePicture, sync them
+  if (this.avatarUrl && !this.profilePicture) {
+    this.profilePicture = this.avatarUrl;
+  }
+  next();
 });
 
 // Compare password method

@@ -6,6 +6,11 @@ const assignmentSchema = new mongoose.Schema({
     ref: 'Course',
     required: true
   },
+  tutorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   title: {
     type: String,
     required: [true, 'Please provide an assignment title'],
@@ -30,6 +35,13 @@ const assignmentSchema = new mongoose.Schema({
     min: [0, 'Score cannot be negative'],
     default: 100
   },
+  files: [{
+    fileName: String,
+    fileUrl: String,
+    fileType: String,
+    cloudinaryId: String
+  }],
+  // Deprecated - kept for backwards compatibility
   attachments: [{
     fileName: String,
     fileUrl: String,

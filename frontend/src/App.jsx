@@ -18,10 +18,18 @@ import NotificationsPage from './pages/notifications/NotificationsPage';
 import ChatPage from './pages/chat/ChatPage';
 import ProfilePage from './pages/profile/ProfilePage';
 
+// Assignment Pages
+import AssignmentListPage from './pages/assignments/AssignmentListPage';
+import AssignmentCreatePage from './pages/assignments/AssignmentCreatePage';
+import AssignmentSubmitPage from './pages/assignments/AssignmentSubmitPage';
+import AssignmentGradingPage from './pages/assignments/AssignmentGradingPage';
+import AssignmentDetailPage from './pages/assignments/AssignmentDetailPage';
+
 // Components
 import PrivateRoute from './components/PrivateRoute';
 import RoleRoute from './components/RoleRoute';
 import ConnectionStatus from './components/ConnectionStatus';
+import AIAssistant from './components/AIAssistant';
 import './App.css';
 
 function App() {
@@ -48,6 +56,7 @@ function App() {
   return (
     <div className="App">
       <ConnectionStatus />
+      {isAuthenticated && <AIAssistant />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
@@ -136,6 +145,78 @@ function App() {
           element={
             <PrivateRoute>
               <ProfilePage />
+            </PrivateRoute>
+          } 
+        />
+
+        {/* Assignment Routes - Students */}
+        <Route 
+          path="/assignments" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['student']}>
+                <AssignmentListPage />
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/courses/:courseId/assignments/:assignmentId" 
+          element={
+            <PrivateRoute>
+              <AssignmentDetailPage />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/courses/:courseId/assignments/:assignmentId/submit" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['student']}>
+                <AssignmentSubmitPage />
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+
+        {/* Assignment Routes - Tutors */}
+        <Route 
+          path="/tutor/assignments" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <AssignmentListPage />
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/tutor/assignments/create" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <AssignmentCreatePage />
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/tutor/courses/:courseId/assignments/create" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <AssignmentCreatePage />
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/tutor/assignments/submissions/:submissionId/grade" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <AssignmentGradingPage />
+              </RoleRoute>
             </PrivateRoute>
           } 
         />

@@ -1,3 +1,4 @@
+// frontend/src/pages/admin/Dashboard.jsx
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
