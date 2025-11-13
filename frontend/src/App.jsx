@@ -25,11 +25,21 @@ import AssignmentSubmitPage from './pages/assignments/AssignmentSubmitPage';
 import AssignmentGradingPage from './pages/assignments/AssignmentGradingPage';
 import AssignmentDetailPage from './pages/assignments/AssignmentDetailPage';
 
+// Admin Pages
+import UsersPage from './pages/admin/UsersPage';
+import CoursesAdminPage from './pages/admin/CoursesPage';
+import AssignmentsAdminPage from './pages/admin/AssignmentsPage';
+import PaymentsPage from './pages/admin/PaymentsPage';
+import FeedModerationPage from './pages/admin/FeedModerationPage';
+import AnalyticsPage from './pages/admin/AnalyticsPage';
+import SettingsPage from './pages/admin/SettingsPage';
+
 // Components
 import PrivateRoute from './components/PrivateRoute';
 import RoleRoute from './components/RoleRoute';
 import ConnectionStatus from './components/ConnectionStatus';
 import AIAssistant from './components/AIAssistant';
+import DashboardLayout from './layouts/DashboardLayout';
 import './App.css';
 
 function App() {
@@ -68,8 +78,32 @@ function App() {
           path="/register" 
           element={isAuthenticated ? <Navigate to={getDashboardByRole()} /> : <RegisterPage />} 
         />
-        <Route path="/courses" element={<CoursesPage />} />
-        <Route path="/courses/:id" element={<CourseDetailPage />} />
+        
+        {/* Courses - With sidebar when authenticated */}
+        <Route 
+          path="/courses" 
+          element={
+            isAuthenticated ? (
+              <DashboardLayout>
+                <CoursesPage />
+              </DashboardLayout>
+            ) : (
+              <CoursesPage />
+            )
+          } 
+        />
+        <Route 
+          path="/courses/:id" 
+          element={
+            isAuthenticated ? (
+              <DashboardLayout>
+                <CourseDetailPage />
+              </DashboardLayout>
+            ) : (
+              <CourseDetailPage />
+            )
+          } 
+        />
 
         {/* Protected Routes - Student */}
         <Route 
@@ -77,7 +111,9 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['student']}>
-                <StudentDashboard />
+                <DashboardLayout>
+                  <StudentDashboard />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 
@@ -89,7 +125,9 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['tutor']}>
-                <TutorDashboard />
+                <DashboardLayout>
+                  <TutorDashboard />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 
@@ -101,7 +139,93 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['admin', 'superadmin']}>
-                <AdminDashboard />
+                <DashboardLayout>
+                  <AdminDashboard />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/admin/users" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['admin', 'superadmin']}>
+                <DashboardLayout>
+                  <UsersPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/admin/courses" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['admin', 'superadmin']}>
+                <DashboardLayout>
+                  <CoursesAdminPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/admin/assignments" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['admin', 'superadmin']}>
+                <DashboardLayout>
+                  <AssignmentsAdminPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/admin/payments" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['admin', 'superadmin']}>
+                <DashboardLayout>
+                  <PaymentsPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/admin/feed-moderation" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['admin', 'superadmin']}>
+                <DashboardLayout>
+                  <FeedModerationPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/admin/analytics" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['admin', 'superadmin']}>
+                <DashboardLayout>
+                  <AnalyticsPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/admin/settings" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['admin', 'superadmin']}>
+                <DashboardLayout>
+                  <SettingsPage />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 
@@ -112,7 +236,9 @@ function App() {
           path="/community" 
           element={
             <PrivateRoute>
-              <CommunityFeedPage />
+              <DashboardLayout>
+                <CommunityFeedPage />
+              </DashboardLayout>
             </PrivateRoute>
           } 
         />
@@ -120,7 +246,9 @@ function App() {
           path="/notifications" 
           element={
             <PrivateRoute>
-              <NotificationsPage />
+              <DashboardLayout>
+                <NotificationsPage />
+              </DashboardLayout>
             </PrivateRoute>
           } 
         />
@@ -128,7 +256,9 @@ function App() {
           path="/chat" 
           element={
             <PrivateRoute>
-              <ChatPage />
+              <DashboardLayout>
+                <ChatPage />
+              </DashboardLayout>
             </PrivateRoute>
           } 
         />
@@ -136,7 +266,9 @@ function App() {
           path="/chat/:roomId" 
           element={
             <PrivateRoute>
-              <ChatPage />
+              <DashboardLayout>
+                <ChatPage />
+              </DashboardLayout>
             </PrivateRoute>
           } 
         />
@@ -144,7 +276,9 @@ function App() {
           path="/profile" 
           element={
             <PrivateRoute>
-              <ProfilePage />
+              <DashboardLayout>
+                <ProfilePage />
+              </DashboardLayout>
             </PrivateRoute>
           } 
         />
@@ -155,7 +289,9 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['student']}>
-                <AssignmentListPage />
+                <DashboardLayout>
+                  <AssignmentListPage />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 
@@ -164,7 +300,9 @@ function App() {
           path="/courses/:courseId/assignments/:assignmentId" 
           element={
             <PrivateRoute>
-              <AssignmentDetailPage />
+              <DashboardLayout>
+                <AssignmentDetailPage />
+              </DashboardLayout>
             </PrivateRoute>
           } 
         />
@@ -173,7 +311,9 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['student']}>
-                <AssignmentSubmitPage />
+                <DashboardLayout>
+                  <AssignmentSubmitPage />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 
@@ -185,7 +325,9 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['tutor']}>
-                <AssignmentListPage />
+                <DashboardLayout>
+                  <AssignmentListPage />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 
@@ -195,7 +337,9 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['tutor']}>
-                <AssignmentCreatePage />
+                <DashboardLayout>
+                  <AssignmentCreatePage />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 
@@ -205,7 +349,9 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['tutor']}>
-                <AssignmentCreatePage />
+                <DashboardLayout>
+                  <AssignmentCreatePage />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 
@@ -215,7 +361,9 @@ function App() {
           element={
             <PrivateRoute>
               <RoleRoute allowedRoles={['tutor']}>
-                <AssignmentGradingPage />
+                <DashboardLayout>
+                  <AssignmentGradingPage />
+                </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
           } 

@@ -37,7 +37,7 @@ import socketService from '../../services/socket';
 
 const FeedPage = () => {
   const dispatch = useDispatch();
-  const toast = useToast();
+  const { addToast } = useToast();
   const { posts, loading } = useSelector((state) => state.feed);
   const { user } = useSelector((state) => state.auth);
   const [newPostContent, setNewPostContent] = useState('');
@@ -75,7 +75,7 @@ const FeedPage = () => {
 
   const handleCreatePost = async () => {
     if (!newPostContent.trim() && selectedFiles.length === 0) {
-      toast.warning('Please add some content to your post');
+      addToast('Please add some content to your post', 'warning');
       return;
     }
 
@@ -90,9 +90,9 @@ const FeedPage = () => {
       await dispatch(createPost(formData)).unwrap();
       setNewPostContent('');
       setSelectedFiles([]);
-      toast.success('Post created successfully!');
+      addToast('Post created successfully!', 'success');
     } catch (error) {
-      toast.error(error || 'Failed to create post');
+      addToast(error || 'Failed to create post', 'error');
     } finally {
       setPosting(false);
     }
@@ -214,7 +214,7 @@ const PostCard = ({ post, currentUser, dispatch, toast }) => {
     try {
       await dispatch(likePost(post._id)).unwrap();
     } catch (error) {
-      toast.error('Failed to like post');
+      addToast('Failed to like post', 'error');
     }
   };
 
@@ -224,19 +224,19 @@ const PostCard = ({ post, currentUser, dispatch, toast }) => {
     try {
       await dispatch(addComment({ postId: post._id, text: commentText })).unwrap();
       setCommentText('');
-      toast.success('Comment added');
+      addToast('Comment added', 'success');
     } catch (error) {
-      toast.error('Failed to add comment');
+      addToast('Failed to add comment', 'error');
     }
   };
 
   const handleDelete = async () => {
     try {
       await dispatch(deletePost(post._id)).unwrap();
-      toast.success('Post deleted');
+      addToast('Post deleted', 'success');
       setShowDeleteModal(false);
     } catch (error) {
-      toast.error('Failed to delete post');
+      addToast('Failed to delete post', 'error');
     }
   };
 

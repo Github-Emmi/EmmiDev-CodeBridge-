@@ -7,6 +7,7 @@ import feedReducer from './slices/feedSlice';
 import notificationReducer from './slices/notificationSlice';
 import chatReducer from './slices/chatSlice';
 import aiReducer from './slices/aiSlice';
+import adminReducer from './slices/adminSlice';
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     notifications: notificationReducer,
     chat: chatReducer,
     ai: aiReducer,
+    admin: adminReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

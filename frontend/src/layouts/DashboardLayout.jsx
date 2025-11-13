@@ -15,6 +15,9 @@ import {
   FileText,
   Settings,
   Sparkles,
+  DollarSign,
+  BarChart3,
+  Shield,
 } from 'lucide-react';
 import { logout } from '../redux/slices/authSlice';
 import { Avatar, Badge } from '../components/ui';
@@ -56,13 +59,20 @@ const DashboardLayout = ({ children }) => {
         { name: 'Dashboard', path: '/admin/dashboard', icon: Home },
         { name: 'Users', path: '/admin/users', icon: Users },
         { name: 'Courses', path: '/admin/courses', icon: BookOpen },
-        { name: 'Analytics', path: '/admin/analytics', icon: Sparkles },
+        { name: 'Assignments', path: '/admin/assignments', icon: FileText },
+        { name: 'Payments', path: '/admin/payments', icon: DollarSign },
+        { name: 'Feed Moderation', path: '/admin/feed-moderation', icon: Shield },
+        { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
+        { name: 'Settings', path: '/admin/settings', icon: Settings },
       ],
       superadmin: [
         { name: 'Dashboard', path: '/admin/dashboard', icon: Home },
         { name: 'Users', path: '/admin/users', icon: Users },
         { name: 'Courses', path: '/admin/courses', icon: BookOpen },
-        { name: 'Analytics', path: '/admin/analytics', icon: Sparkles },
+        { name: 'Assignments', path: '/admin/assignments', icon: FileText },
+        { name: 'Payments', path: '/admin/payments', icon: DollarSign },
+        { name: 'Feed Moderation', path: '/admin/feed-moderation', icon: Shield },
+        { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
         { name: 'Settings', path: '/admin/settings', icon: Settings },
       ],
     };
