@@ -377,7 +377,7 @@ exports.getCourseSchedule = async (req, res) => {
     const isEnrolled = course.enrolledStudents.some(
       e => e.studentId.toString() === req.user.id
     );
-    const isTutor = course.tutorId._id.toString() === req.user.id;
+    const isTutor = course.tutorId && course.tutorId._id.toString() === req.user.id;
 
     if (!isEnrolled && !isTutor && req.user.role !== 'admin') {
       return res.status(403).json({
