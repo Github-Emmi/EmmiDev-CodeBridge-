@@ -238,9 +238,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**EmmiDev** - Full Stack Developer & Educator
+**Aghason Emmanuel Ibeabuchi** - Full Stack Developer & Educator
 - YouTube: [@EmmiDevCodes](https://youtube.com/@EmmiDevCodes)
-- Email: emmidev@emmidevcode.com
+- Email: Aghason.emmanuel@gmail.com
 
 ## 🙏 Acknowledgments
 
