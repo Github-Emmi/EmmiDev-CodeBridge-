@@ -73,6 +73,10 @@ const postSchema = new mongoose.Schema({
   isHidden: {
     type: Boolean,
     default: false
+  },
+  moderationReason: {
+    type: String,
+    maxlength: [500, 'Moderation reason cannot exceed 500 characters']
   }
 }, {
   timestamps: true

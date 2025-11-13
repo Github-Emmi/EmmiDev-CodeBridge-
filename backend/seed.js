@@ -16,6 +16,14 @@ const seedData = async () => {
 
     console.log('📊 Connected to MongoDB. Starting seed...');
 
+    // Clear existing data
+    console.log('🗑️  Clearing existing data...');
+    await User.deleteMany({});
+    await Course.deleteMany({});
+    await Post.deleteMany({});
+    await ChatRoom.deleteMany({});
+    console.log('✅ Existing data cleared');
+
     // Hash password helper
     const hashPassword = async (password) => {
       const salt = await bcrypt.genSalt(10);
@@ -24,22 +32,34 @@ const seedData = async () => {
 
     const hashedPassword = await hashPassword('password123');
 
-    // Clear existing data (optional - comment out in production)
-    // await User.deleteMany({});
-    // await Course.deleteMany({});
-    // await Post.deleteMany({});
-    // await ChatRoom.deleteMany({});
+    // Create admin users
+    console.log('👤 Creating admin users...');
+    
+    const superadmin = await User.create({
+      name: 'Super Admin',
+      email: 'superadmin@emmidevcode.com',
+      passwordHash: hashedPassword,
+      role: 'superadmin',
+      bio: 'Platform super administrator with full access',
+      isActive: true,
+      emailVerified: true
+    });
+    console.log('✅ Super Admin created:', superadmin.email);
 
-    // Create sample users
     const admin = await User.create({
       name: 'Admin User',
       email: 'admin@emmidevcode.com',
       passwordHash: hashedPassword,
       role: 'admin',
       bio: 'Platform administrator',
-      isActive: true
+      isActive: true,
+      emailVerified: true
     });
+    console.log('✅ Admin created:', admin.email);
 
+    // Create tutor users
+    console.log('👨‍🏫 Creating tutor users...');
+    
     const tutor1 = await User.create({
       name: 'EmmiDev',
       email: 'emmidev@emmidevcode.com',
@@ -48,8 +68,10 @@ const seedData = async () => {
       bio: 'Full-stack developer and educator with 5+ years of experience',
       verifiedTutor: true,
       avatarUrl: 'https://ui-avatars.com/api/?name=EmmiDev&background=4F46E5&color=fff',
-      isActive: true
+      isActive: true,
+      emailVerified: true
     });
+    console.log('✅ Tutor created:', tutor1.email);
 
     const tutor2 = await User.create({
       name: 'Sarah Johnson',
@@ -59,9 +81,14 @@ const seedData = async () => {
       bio: 'Data Science expert and AI enthusiast',
       verifiedTutor: true,
       avatarUrl: 'https://ui-avatars.com/api/?name=Sarah+Johnson&background=10B981&color=fff',
-      isActive: true
+      isActive: true,
+      emailVerified: true
     });
+    console.log('✅ Tutor created:', tutor2.email);
 
+    // Create student users
+    console.log('👨‍🎓 Creating student users...');
+    
     const students = await User.insertMany([
       {
         name: 'John Doe',
@@ -69,7 +96,8 @@ const seedData = async () => {
         passwordHash: hashedPassword,
         role: 'student',
         bio: 'Aspiring web developer',
-        avatarUrl: 'https://ui-avatars.com/api/?name=John+Doe&background=3B82F6&color=fff'
+        avatarUrl: 'https://ui-avatars.com/api/?name=John+Doe&background=3B82F6&color=fff',
+        emailVerified: true
       },
       {
         name: 'Jane Smith',
@@ -77,7 +105,8 @@ const seedData = async () => {
         passwordHash: hashedPassword,
         role: 'student',
         bio: 'Learning mobile development',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Jane+Smith&background=EC4899&color=fff'
+        avatarUrl: 'https://ui-avatars.com/api/?name=Jane+Smith&background=EC4899&color=fff',
+        emailVerified: true
       },
       {
         name: 'Mike Wilson',
@@ -85,13 +114,17 @@ const seedData = async () => {
         passwordHash: hashedPassword,
         role: 'student',
         bio: 'Data science enthusiast',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Mike+Wilson&background=F59E0B&color=fff'
+        avatarUrl: 'https://ui-avatars.com/api/?name=Mike+Wilson&background=F59E0B&color=fff',
+        emailVerified: true
       }
     ]);
+    console.log(`✅ ${students.length} students created`);
 
-    console.log('✅ Users created');
+    console.log('✅ All users created successfully');
 
     // Create sample courses
+    console.log('📚 Creating courses...');
+    
     const course1 = await Course.create({
       title: 'Complete MERN Stack Development',
       description: 'Learn MongoDB, Express, React, and Node.js from scratch to build full-stack applications',
@@ -277,6 +310,8 @@ const seedData = async () => {
     console.log('✅ Students enrolled');
 
     // Create sample posts
+    console.log('📝 Creating community posts...');
+    
     await Post.insertMany([
       {
         authorId: tutor1._id,
@@ -317,15 +352,42 @@ const seedData = async () => {
     console.log('✅ Posts created');
 
     console.log('\n🎉 Seed data created successfully!\n');
-    console.log('Sample Accounts:');
-    console.log('================');
-    console.log('Admin: admin@emmidevcode.com / password123');
-    console.log('Tutor: emmidev@emmidevcode.com / password123');
-    console.log('Tutor: sarah@emmidevcode.com / password123');
-    console.log('Student: john@student.com / password123');
-    console.log('Student: jane@student.com / password123');
-    console.log('Student: mike@student.com / password123');
-    console.log('================\n');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('                     SAMPLE ACCOUNTS                        ');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('\n👑 SUPER ADMIN:');
+    console.log('   Email: superadmin@emmidevcode.com');
+    console.log('   Password: password123');
+    console.log('   Role: superadmin');
+    console.log('\n🛡️  ADMIN:');
+    console.log('   Email: admin@emmidevcode.com');
+    console.log('   Password: password123');
+    console.log('   Role: admin');
+    console.log('\n👨‍🏫 TUTORS:');
+    console.log('   1. Email: emmidev@emmidevcode.com');
+    console.log('      Password: password123');
+    console.log('      Name: EmmiDev (Verified)');
+    console.log('   2. Email: sarah@emmidevcode.com');
+    console.log('      Password: password123');
+    console.log('      Name: Sarah Johnson (Verified)');
+    console.log('\n👨‍🎓 STUDENTS:');
+    console.log('   1. Email: john@student.com');
+    console.log('      Password: password123');
+    console.log('      Name: John Doe');
+    console.log('   2. Email: jane@student.com');
+    console.log('      Password: password123');
+    console.log('      Name: Jane Smith');
+    console.log('   3. Email: mike@student.com');
+    console.log('      Password: password123');
+    console.log('      Name: Mike Wilson');
+    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log('\n📊 Database Summary:');
+    console.log(`   • Users: 7 (2 Admins, 2 Tutors, 3 Students)`);
+    console.log(`   • Courses: 3 (2 Paid, 1 Free)`);
+    console.log(`   • Posts: 3`);
+    console.log(`   • Chat Rooms: 3`);
+    console.log('\n✅ You can now login with any of the above accounts!');
+    console.log('═══════════════════════════════════════════════════════════\n');
 
     process.exit(0);
   } catch (error) {

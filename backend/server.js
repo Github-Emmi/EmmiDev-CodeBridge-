@@ -52,7 +52,8 @@ app.get('/', (req, res) => {
       payments: '/api/payments',
       ai: '/api/ai',
       notifications: '/api/notifications',
-      chat: '/api/chat'
+      chat: '/api/chat',
+      admin: '/api/admin'
     },
     documentation: 'See README.md for full API documentation'
   });
@@ -77,6 +78,7 @@ app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Error Handler Middleware
 app.use((err, req, res, next) => {

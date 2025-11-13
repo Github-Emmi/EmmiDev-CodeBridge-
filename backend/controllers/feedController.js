@@ -311,10 +311,13 @@ exports.toggleLike = async (req, res) => {
 
     await post.save();
 
+    // Populate author info for response
+    await post.populate('authorId', 'name email avatarUrl role verifiedTutor');
+
     res.status(200).json({
       success: true,
       message: likeIndex > -1 ? 'Post unliked' : 'Post liked',
-      likesCount: post.likes.length
+      data: post
     });
   } catch (error) {
     console.error('Toggle like error:', error);
