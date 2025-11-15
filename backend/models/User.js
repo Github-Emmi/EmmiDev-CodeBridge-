@@ -60,6 +60,17 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  phone: String,
+  location: String,
+  website: String,
+  settings: {
+    emailNotifications: { type: Boolean, default: true },
+    pushNotifications: { type: Boolean, default: true },
+    courseUpdates: { type: Boolean, default: true },
+    assignmentReminders: { type: Boolean, default: true },
+    communityPosts: { type: Boolean, default: false },
+    profileVisibility: { type: String, enum: ['public', 'enrolled', 'private'], default: 'public' }
+  },
   lastLogin: Date
 }, {
   timestamps: true

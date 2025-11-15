@@ -224,3 +224,69 @@ exports.logout = async (req, res, next) => {
     message: 'Logged out successfully'
   });
 };
+
+// @desc    Upload avatar
+// @route   POST /api/auth/upload-avatar
+// @access  Private
+exports.uploadAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image file'
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    // Update avatar URL
+    user.avatarUrl = req.file.path; // Cloudinary URL
+    user.profilePicture = req.file.path;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Avatar uploaded successfully',
+      data: {
+        avatarUrl: user.avatarUrl,
+        profilePicture: user.profilePicture
+      }
+    });
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during avatar upload',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update notification settings
+// @route   PUT /api/auth/settings
+// @access  Private
+exports.updateSettings = async (req, res, next) => {
+  try {
+    const settings = req.body;
+
+    // Store settings in user document (you may want to create a separate Settings model)
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: { settings } },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Settings updated successfully',
+      data: user.settings
+    });
+  } catch (error) {
+    console.error('Update settings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};

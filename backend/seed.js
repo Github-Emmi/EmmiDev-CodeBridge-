@@ -24,21 +24,13 @@ const seedData = async () => {
     await ChatRoom.deleteMany({});
     console.log('✅ Existing data cleared');
 
-    // Hash password helper
-    const hashPassword = async (password) => {
-      const salt = await bcrypt.genSalt(10);
-      return await bcrypt.hash(password, salt);
-    };
-
-    const hashedPassword = await hashPassword('password123');
-
     // Create admin users
     console.log('👤 Creating admin users...');
     
     const superadmin = await User.create({
       name: 'Super Admin',
       email: 'superadmin@emmidevcode.com',
-      passwordHash: hashedPassword,
+      passwordHash: 'password123', // Model will hash this automatically
       role: 'superadmin',
       bio: 'Platform super administrator with full access',
       isActive: true,
@@ -49,7 +41,7 @@ const seedData = async () => {
     const admin = await User.create({
       name: 'Admin User',
       email: 'admin@emmidevcode.com',
-      passwordHash: hashedPassword,
+      passwordHash: 'password123', // Model will hash this automatically
       role: 'admin',
       bio: 'Platform administrator',
       isActive: true,
@@ -63,7 +55,7 @@ const seedData = async () => {
     const tutor1 = await User.create({
       name: 'EmmiDev',
       email: 'emmidev@emmidevcode.com',
-      passwordHash: hashedPassword,
+      passwordHash: 'password123', // Model will hash this automatically
       role: 'tutor',
       bio: 'Full-stack developer and educator with 5+ years of experience',
       verifiedTutor: true,
@@ -76,7 +68,7 @@ const seedData = async () => {
     const tutor2 = await User.create({
       name: 'Sarah Johnson',
       email: 'sarah@emmidevcode.com',
-      passwordHash: hashedPassword,
+      passwordHash: 'password123', // Model will hash this automatically
       role: 'tutor',
       bio: 'Data Science expert and AI enthusiast',
       verifiedTutor: true,
@@ -93,7 +85,7 @@ const seedData = async () => {
       {
         name: 'John Doe',
         email: 'john@student.com',
-        passwordHash: hashedPassword,
+        passwordHash: 'password123', // Model will hash this automatically
         role: 'student',
         bio: 'Aspiring web developer',
         avatarUrl: 'https://ui-avatars.com/api/?name=John+Doe&background=3B82F6&color=fff',
@@ -102,7 +94,7 @@ const seedData = async () => {
       {
         name: 'Jane Smith',
         email: 'jane@student.com',
-        passwordHash: hashedPassword,
+        passwordHash: 'password123', // Model will hash this automatically
         role: 'student',
         bio: 'Learning mobile development',
         avatarUrl: 'https://ui-avatars.com/api/?name=Jane+Smith&background=EC4899&color=fff',
@@ -111,7 +103,7 @@ const seedData = async () => {
       {
         name: 'Mike Wilson',
         email: 'mike@student.com',
-        passwordHash: hashedPassword,
+        passwordHash: 'password123', // Model will hash this automatically
         role: 'student',
         bio: 'Data science enthusiast',
         avatarUrl: 'https://ui-avatars.com/api/?name=Mike+Wilson&background=F59E0B&color=fff',

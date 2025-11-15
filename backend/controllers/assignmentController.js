@@ -331,17 +331,28 @@ exports.gradeSubmission = async (req, res) => {
     await submission.save();
 
     // Notify student
-    await Notification.create({
+    const notification = await Notification.create({
       userId: submission.studentId,
       type: 'assignment_graded',
       title: 'Assignment Graded',
       message: `Your submission for "${submission.assignmentId.title}" has been graded`,
       metadata: {
         assignmentId: submission.assignmentId._id,
-        courseId: course._id
+        courseId: course._id,
+        score: finalScore,
+        maxScore: submission.assignmentId.maxScore
       },
       priority: 'high'
     });
+
+    // Send real-time notification via Socket.io
+    const io = req.app.get('io');
+    if (io) {
+      io.to(submission.studentId.toString()).emit('notification', {
+        ...notification.toObject(),
+        message: `Your assignment "${submission.assignmentId.title}" has been graded: ${finalScore}/${submission.assignmentId.maxScore}`
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -428,6 +439,109 @@ exports.getMySubmissions = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching submissions',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get tutor's assignments (all assignments for courses they teach)
+// @route   GET /api/assignments/tutor/my-assignments
+// @access  Private (Tutor)
+exports.getTutorAssignments = async (req, res) => {
+  try {
+    const Course = require('../models/Course');
+    
+    // Find all courses taught by this tutor
+    const tutorCourses = await Course.find({ tutorId: req.user.id }).select('_id title');
+    const courseIds = tutorCourses.map(course => course._id);
+
+    // Find all assignments for these courses
+    const assignments = await Assignment.find({ courseId: { $in: courseIds } })
+      .populate('courseId', 'title')
+      .sort('-createdAt');
+
+    // Get submission counts for each assignment
+    const assignmentsWithStats = await Promise.all(
+      assignments.map(async (assignment) => {
+        const totalSubmissions = await Submission.countDocuments({ 
+          assignmentId: assignment._id 
+        });
+        const gradedSubmissions = await Submission.countDocuments({ 
+          assignmentId: assignment._id,
+          status: 'graded'
+        });
+        const pendingSubmissions = await Submission.countDocuments({ 
+          assignmentId: assignment._id,
+          status: 'submitted'
+        });
+
+        return {
+          ...assignment.toObject(),
+          stats: {
+            totalSubmissions,
+            gradedSubmissions,
+            pendingSubmissions
+          }
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      count: assignmentsWithStats.length,
+      data: assignmentsWithStats
+    });
+  } catch (error) {
+    console.error('Get tutor assignments error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching tutor assignments',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get all pending submissions for tutor's assignments
+// @route   GET /api/assignments/tutor/pending-submissions
+// @access  Private (Tutor)
+exports.getTutorPendingSubmissions = async (req, res) => {
+  try {
+    const Course = require('../models/Course');
+    
+    // Find all courses taught by this tutor
+    const tutorCourses = await Course.find({ tutorId: req.user.id }).select('_id');
+    const courseIds = tutorCourses.map(course => course._id);
+
+    // Find all assignments for these courses
+    const tutorAssignments = await Assignment.find({ courseId: { $in: courseIds } }).select('_id');
+    const assignmentIds = tutorAssignments.map(assignment => assignment._id);
+
+    // Find all submitted (not graded) submissions for these assignments
+    const pendingSubmissions = await Submission.find({ 
+      assignmentId: { $in: assignmentIds },
+      status: 'submitted'
+    })
+      .populate('studentId', 'name email')
+      .populate('assignmentId', 'title dueDate maxScore courseId')
+      .populate({
+        path: 'assignmentId',
+        populate: {
+          path: 'courseId',
+          select: 'title'
+        }
+      })
+      .sort('-submittedAt');
+
+    res.status(200).json({
+      success: true,
+      count: pendingSubmissions.length,
+      data: pendingSubmissions
+    });
+  } catch (error) {
+    console.error('Get tutor pending submissions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching pending submissions',
       error: error.message
     });
   }

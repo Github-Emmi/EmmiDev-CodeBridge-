@@ -50,14 +50,24 @@ module.exports = (socketIO) => {
     // Send message
     socket.on('sendMessage', async (data) => {
       try {
-        const { roomId, message, type, from } = data;
+        // Handle different data formats
+        const roomId = data.roomId || data.room;
+        const messageText = data.message || data.text;
+        const from = data.from || socket.userId;
+        const type = data.type || 'text';
+
+        if (!roomId || !messageText || !from) {
+          console.error('Invalid message data:', data);
+          socket.emit('error', { message: 'Invalid message data. Required: roomId, message, from' });
+          return;
+        }
 
         // Save message to database
         const newMessage = await Message.create({
           roomId,
           from,
-          message,
-          type: type || 'text'
+          message: messageText,
+          type
         });
 
         await newMessage.populate('from', 'name avatarUrl');
@@ -65,7 +75,7 @@ module.exports = (socketIO) => {
         // Update chat room last message
         await ChatRoom.findByIdAndUpdate(roomId, {
           lastMessage: {
-            text: message,
+            text: messageText,
             from,
             timestamp: Date.now()
           }

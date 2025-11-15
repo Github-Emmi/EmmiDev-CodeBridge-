@@ -132,6 +132,30 @@ function App() {
             </PrivateRoute>
           } 
         />
+        <Route 
+          path="/tutor/courses" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <DashboardLayout>
+                  <CoursesPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/tutor/assignments" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <DashboardLayout>
+                  <AssignmentListPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
 
         {/* Protected Routes - Admin */}
         <Route 

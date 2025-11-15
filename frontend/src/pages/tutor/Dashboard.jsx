@@ -44,7 +44,7 @@ const TutorDashboard = () => {
       );
 
       // Fetch pending submissions
-      const submissionsRes = await api.get('/assignments/submissions?status=submitted');
+      const submissionsRes = await api.get('/assignments/tutor/pending-submissions');
       const pendingGrading = submissionsRes.data.data?.length || 0;
 
       setStats({

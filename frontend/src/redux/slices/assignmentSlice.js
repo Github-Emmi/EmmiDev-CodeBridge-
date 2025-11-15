@@ -91,6 +91,18 @@ export const fetchMySubmissions = createAsyncThunk(
   }
 );
 
+export const fetchTutorAssignments = createAsyncThunk(
+  'assignments/fetchTutorAssignments',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get('/assignments/tutor/my-assignments');
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch tutor assignments');
+    }
+  }
+);
+
 const assignmentSlice = createSlice({
   name: 'assignments',
   initialState: {
@@ -206,6 +218,19 @@ const assignmentSlice = createSlice({
         state.mySubmissions = action.payload;
       })
       .addCase(fetchMySubmissions.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Fetch Tutor Assignments
+      .addCase(fetchTutorAssignments.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTutorAssignments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.assignments = action.payload;
+      })
+      .addCase(fetchTutorAssignments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
