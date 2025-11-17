@@ -13,15 +13,32 @@ exports.getCourses = async (req, res) => {
       level,
       search,
       tutorId,
+      tutor, // New parameter for "tutor=me"
       minPrice,
       maxPrice,
       page = 1,
       limit = 12,
-      sort = '-createdAt'
+      sort = '-createdAt',
+      isPublished // New parameter to filter by published status
     } = req.query;
 
     // Build query
-    const query = { isPublished: true };
+    const query = {};
+
+    // If tutor=me, show only logged-in tutor's courses (published and unpublished)
+    if (tutor === 'me' && req.user && req.user.role === 'tutor') {
+      query.tutorId = req.user.id;
+      // Don't filter by isPublished or isApproved for tutor's own courses
+    } else if (req.user && (req.user.role === 'admin' || req.user.role === 'superadmin')) {
+      // Admins can see all courses
+      if (isPublished !== undefined) {
+        query.isPublished = isPublished === 'true';
+      }
+    } else {
+      // For students and public, only show published AND approved courses
+      query.isPublished = true;
+      query.isApproved = true;
+    }
 
     if (category) query.category = category;
     if (level) query.level = level;
@@ -459,6 +476,95 @@ exports.addRating = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error adding rating',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Approve course (Admin only)
+// @route   PUT /api/courses/:id/approve
+// @access  Private/Admin
+exports.approveCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    course.isApproved = true;
+    course.approvedBy = req.user.id;
+    course.approvedAt = Date.now();
+    course.rejectionReason = undefined;
+    await course.save();
+
+    // Create notification for tutor
+    await Notification.create({
+      recipientId: course.tutorId,
+      type: 'course_approved',
+      title: 'Course Approved',
+      message: `Your course "${course.title}" has been approved and is now visible to students.`,
+      relatedId: course._id,
+      relatedModel: 'Course'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Course approved successfully',
+      data: course
+    });
+  } catch (error) {
+    console.error('Approve course error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error approving course',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Reject course (Admin only)
+// @route   PUT /api/courses/:id/reject
+// @access  Private/Admin
+exports.rejectCourse = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    course.isApproved = false;
+    course.rejectionReason = reason;
+    await course.save();
+
+    // Create notification for tutor
+    await Notification.create({
+      recipientId: course.tutorId,
+      type: 'course_rejected',
+      title: 'Course Requires Changes',
+      message: `Your course "${course.title}" needs some improvements. Reason: ${reason}`,
+      relatedId: course._id,
+      relatedModel: 'Course'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Course rejected',
+      data: course
+    });
+  } catch (error) {
+    console.error('Reject course error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error rejecting course',
       error: error.message
     });
   }

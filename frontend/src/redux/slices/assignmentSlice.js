@@ -71,7 +71,7 @@ export const gradeSubmission = createAsyncThunk(
   'assignments/gradeSubmission',
   async ({ submissionId, data: gradeData }, { rejectWithValue }) => {
     try {
-      const { data } = await api.put(`/assignments/submissions/${submissionId}/grade`, gradeData);
+      const { data } = await api.put(`/assignments/submission/${submissionId}/grade`, gradeData);
       return data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to grade submission');

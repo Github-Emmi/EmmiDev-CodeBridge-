@@ -17,7 +17,7 @@ const AssignmentSubmitPage = () => {
   const navigate = useNavigate();
   const { courseId, assignmentId } = useParams();
   const { user } = useSelector((state) => state.auth);
-  const { submitting } = useSelector((state) => state.assignment);
+  const { submitting } = useSelector((state) => state.assignments);
   const { addToast } = useToast();
 
   const [assignment, setAssignment] = useState(null);

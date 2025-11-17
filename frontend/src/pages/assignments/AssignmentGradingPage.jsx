@@ -20,7 +20,7 @@ const AssignmentGradingPage = () => {
   const navigate = useNavigate();
   const { courseId, assignmentId, submissionId } = useParams();
   const { user } = useSelector((state) => state.auth);
-  const { grading } = useSelector((state) => state.assignment);
+  const { grading } = useSelector((state) => state.assignments);
   const { addToast } = useToast();
 
   const [assignment, setAssignment] = useState(null);

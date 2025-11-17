@@ -80,12 +80,24 @@ export const fetchAllCourses = createAsyncThunk(
 
 export const approveCourse = createAsyncThunk(
   'admin/approveCourse',
-  async ({ courseId, isPublished }, { rejectWithValue }) => {
+  async (courseId, { rejectWithValue }) => {
     try {
-      const { data } = await api.patch(`/admin/courses/${courseId}/approve`, { isPublished });
+      const { data } = await api.patch(`/api/admin/courses/${courseId}/approve`);
       return data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update course');
+      return rejectWithValue(error.response?.data?.message || 'Failed to approve course');
+    }
+  }
+);
+
+export const rejectCourse = createAsyncThunk(
+  'admin/rejectCourse',
+  async ({ courseId, reason }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.patch(`/api/admin/courses/${courseId}/reject`, { reason });
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to reject course');
     }
   }
 );
@@ -412,6 +424,13 @@ const adminSlice = createSlice({
       })
       // Approve Course
       .addCase(approveCourse.fulfilled, (state, action) => {
+        const index = state.courses.list.findIndex((c) => c._id === action.payload._id);
+        if (index !== -1) {
+          state.courses.list[index] = action.payload;
+        }
+      })
+      // Reject Course
+      .addCase(rejectCourse.fulfilled, (state, action) => {
         const index = state.courses.list.findIndex((c) => c._id === action.payload._id);
         if (index !== -1) {
           state.courses.list[index] = action.payload;

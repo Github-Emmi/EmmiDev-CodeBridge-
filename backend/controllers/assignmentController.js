@@ -50,6 +50,7 @@ exports.createAssignment = async (req, res) => {
     // Create assignment
     const assignment = await Assignment.create({
       courseId,
+      tutorId: req.user.id,
       title,
       description,
       instructions,
@@ -251,16 +252,19 @@ exports.submitAssignment = async (req, res) => {
 
     await submission.save();
 
-    // Notify tutor
+    // Notify tutor (use assignment.tutorId instead of course.tutorId)
     await Notification.create({
-      userId: course.tutorId,
-      type: 'system',
+      userId: assignment.tutorId,
+      type: 'assignment_submitted',
       title: 'New Assignment Submission',
       message: `${req.user.name} submitted "${assignment.title}"`,
       metadata: {
-        courseId: course._id,
-        assignmentId: assignment._id
-      }
+        courseId: assignment.courseId,
+        assignmentId: assignment._id,
+        submissionId: submission._id,
+        studentId: req.user.id
+      },
+      priority: 'medium'
     });
 
     res.status(201).json({
@@ -506,14 +510,8 @@ exports.getTutorAssignments = async (req, res) => {
 // @access  Private (Tutor)
 exports.getTutorPendingSubmissions = async (req, res) => {
   try {
-    const Course = require('../models/Course');
-    
-    // Find all courses taught by this tutor
-    const tutorCourses = await Course.find({ tutorId: req.user.id }).select('_id');
-    const courseIds = tutorCourses.map(course => course._id);
-
-    // Find all assignments for these courses
-    const tutorAssignments = await Assignment.find({ courseId: { $in: courseIds } }).select('_id');
+    // Find all assignments created by this tutor
+    const tutorAssignments = await Assignment.find({ tutorId: req.user.id }).select('_id');
     const assignmentIds = tutorAssignments.map(assignment => assignment._id);
 
     // Find all submitted (not graded) submissions for these assignments
@@ -521,7 +519,7 @@ exports.getTutorPendingSubmissions = async (req, res) => {
       assignmentId: { $in: assignmentIds },
       status: 'submitted'
     })
-      .populate('studentId', 'name email')
+      .populate('studentId', 'name email avatarUrl')
       .populate('assignmentId', 'title dueDate maxScore courseId')
       .populate({
         path: 'assignmentId',

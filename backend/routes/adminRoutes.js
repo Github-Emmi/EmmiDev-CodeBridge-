@@ -8,6 +8,7 @@ const {
   deleteUser,
   getAllCourses,
   approveCourse,
+  rejectCourse,
   assignTutorToCourse,
   deleteCourse,
   getAllAssignments,
@@ -44,6 +45,7 @@ router.route('/courses/:id')
   .delete(deleteCourse);
 
 router.patch('/courses/:id/approve', approveCourse);
+router.patch('/courses/:id/reject', rejectCourse);
 router.patch('/courses/:id/assign', assignTutorToCourse);
 
 // ==================== ASSIGNMENT OVERSIGHT ====================

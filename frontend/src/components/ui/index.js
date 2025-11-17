@@ -11,3 +11,6 @@ export { default as Avatar } from './Avatar';
 export { default as Select } from './Select';
 export { default as EmptyState } from './EmptyState';
 export { default as FileUpload } from './FileUpload';
+export { default as GradientButton } from './GradientButton';
+export { default as GlassmorphismCard } from './GlassmorphismCard';
+export { default as ThemeToggle } from './ThemeToggle';

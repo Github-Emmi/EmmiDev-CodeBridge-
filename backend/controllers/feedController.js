@@ -4,7 +4,7 @@ const { uploadToCloudinary, uploadMultipleToCloudinary } = require('../utils/clo
 
 // @desc    Get all posts (community feed)
 // @route   GET /api/feeds
-// @access  Public/Private (optionalAuth)
+// @access  Private (role-based filtering)
 exports.getPosts = async (req, res) => {
   try {
     const {
@@ -30,10 +30,20 @@ exports.getPosts = async (req, res) => {
       query.authorId = authorId;
     }
 
+    // Role-based filtering: Students see student posts, Tutors see tutor posts
+    if (req.user) {
+      // First, get all authors with the same role as the current user
+      const sameRoleUsers = await User.find({ role: req.user.role }).select('_id');
+      const sameRoleUserIds = sameRoleUsers.map(u => u._id);
+      
+      // Filter posts to only show posts from users with the same role
+      query.authorId = { $in: sameRoleUserIds };
+    }
+
     // Execute query
     const posts = await Post.find(query)
       .populate('authorId', 'name email avatarUrl role verifiedTutor')
-      .populate('comments.authorId', 'name avatarUrl')
+      .populate('comments.authorId', 'name avatarUrl role')
       .populate('courseId', 'title')
       .sort({ isPinned: -1, createdAt: -1 })
       .limit(limit * 1)

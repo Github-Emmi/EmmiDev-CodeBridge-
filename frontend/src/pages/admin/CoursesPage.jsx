@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -11,10 +11,15 @@ import {
   Clock,
   DollarSign,
   Users as UsersIcon,
+  AlertCircle,
+  Filter,
+  Download,
+  RefreshCw,
 } from 'lucide-react';
 import {
   fetchAllCourses,
   approveCourse,
+  rejectCourse,
   deleteCourse,
 } from '../../redux/slices/adminSlice';
 import {
@@ -29,6 +34,7 @@ import {
   EmptyState,
   useToast,
 } from '../../components/ui';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const CoursesPage = () => {
   const dispatch = useDispatch();
@@ -44,7 +50,37 @@ const CoursesPage = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Memoized filtered courses
+  const filteredCourses = useMemo(() => {
+    let filtered = courses.list || [];
+    
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        (course) =>
+          course.title?.toLowerCase().includes(searchLower) ||
+          course.description?.toLowerCase().includes(searchLower) ||
+          course.tutorId?.name?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (filters.status) {
+      filtered = filtered.filter((course) => {
+        if (filters.status === 'approved') return course.isApproved && course.isPublished;
+        if (filters.status === 'pending') return course.isPublished && !course.isApproved && !course.rejectionReason;
+        if (filters.status === 'rejected') return course.rejectionReason;
+        if (filters.status === 'draft') return !course.isPublished;
+        return true;
+      });
+    }
+    
+    return filtered;
+  }, [courses.list, filters]);
 
   useEffect(() => {
     dispatch(fetchAllCourses(filters));
@@ -62,17 +98,33 @@ const CoursesPage = () => {
     setSearchParams(params);
   };
 
-  const handleApproveCourse = async (courseId, approve) => {
+  const handleApproveCourse = async () => {
     try {
-      await dispatch(approveCourse({ courseId, isPublished: approve })).unwrap();
-      addToast(
-        approve ? 'Course approved successfully!' : 'Course unpublished',
-        'success'
-      );
+      await dispatch(approveCourse(selectedCourse._id)).unwrap();
+      addToast('Course approved successfully!', 'success');
       setShowApprovalModal(false);
       setSelectedCourse(null);
+      dispatch(fetchAllCourses(filters));
     } catch (error) {
-      addToast(error || 'Failed to update course', 'error');
+      addToast(error || 'Failed to approve course', 'error');
+    }
+  };
+
+  const handleRejectCourse = async () => {
+    if (!rejectionReason.trim()) {
+      addToast('Please provide a reason for rejection', 'error');
+      return;
+    }
+    
+    try {
+      await dispatch(rejectCourse({ courseId: selectedCourse._id, reason: rejectionReason })).unwrap();
+      addToast('Course rejected with feedback sent to tutor', 'success');
+      setShowRejectModal(false);
+      setSelectedCourse(null);
+      setRejectionReason('');
+      dispatch(fetchAllCourses(filters));
+    } catch (error) {
+      addToast(error || 'Failed to reject course', 'error');
     }
   };
 
@@ -87,100 +139,186 @@ const CoursesPage = () => {
     }
   };
 
-  const getStatusBadge = (isPublished) => {
-    return isPublished ? (
-      <Badge variant="success">Published</Badge>
-    ) : (
-      <Badge variant="warning">Pending</Badge>
-    );
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await dispatch(fetchAllCourses(filters));
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const getStatusBadge = (course) => {
+    if (course.isApproved && course.isPublished) {
+      return <Badge variant="success">Approved</Badge>;
+    } else if (course.rejectionReason) {
+      return <Badge variant="danger">Rejected</Badge>;
+    } else if (course.isPublished) {
+      return <Badge variant="warning">Pending Review</Badge>;
+    } else {
+      return <Badge variant="secondary">Draft</Badge>;
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-between mb-8"
+        >
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <BookOpen className="w-8 h-8" />
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg">
+                <BookOpen className="w-8 h-8 text-white" />
+              </div>
               Course Management
             </h1>
-            <p className="text-gray-600 mt-1">
-              Approve, manage, and monitor all courses
+            <p className="text-gray-600 dark:text-gray-400 mt-2 ml-1">
+              Approve, manage, and monitor all platform courses
             </p>
           </div>
-          <div className="flex gap-2">
-            <Badge variant="warning" className="text-sm">
-              {courses.list.filter((c) => !c.isPublished).length} Pending Approval
-            </Badge>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <div className="flex gap-2">
+              <Badge variant="warning" className="text-sm px-4 py-2">
+                <Clock className="w-4 h-4 mr-1" />
+                {courses.list.filter((c) => c.isPublished && !c.isApproved && !c.rejectionReason).length} Pending
+              </Badge>
+              <Badge variant="danger" className="text-sm px-4 py-2">
+                <AlertCircle className="w-4 h-4 mr-1" />
+                {courses.list.filter((c) => c.rejectionReason).length} Rejected
+              </Badge>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Filters */}
-        <Card className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative md:col-span-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search by course title or description..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="pl-10"
-              />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Card className="mb-6 shadow-lg">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="relative md:col-span-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search by course title, description, or tutor name..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="pl-10 border-2 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
 
-            <Select
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="published">Published</option>
-              <option value="pending">Pending Approval</option>
-            </Select>
-          </div>
-        </Card>
+              <Select
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="border-2 focus:border-indigo-500 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="">All Status</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending Review</option>
+                <option value="rejected">Rejected</option>
+                <option value="draft">Draft</option>
+              </Select>
+            </div>
+            {(filters.search || filters.status) && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mt-4 flex items-center justify-between pt-4 border-t dark:border-gray-700"
+              >
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Found {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setFilters({ search: '', status: '', tutorId: '' });
+                    setSearchParams({});
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </motion.div>
+            )}
+          </Card>
+        </motion.div>
 
         {/* Courses Table */}
-        <Card>
-          {courses.loading && courses.list.length === 0 ? (
-            <div className="py-12 text-center">
-              <Loader size="lg" />
-            </div>
-          ) : courses.list.length === 0 ? (
-            <EmptyState
-              icon={BookOpen}
-              title="No courses found"
-              description="Try adjusting your filters or wait for tutors to create courses"
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Course
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tutor
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stats
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {courses.list.map((course) => (
-                    <tr key={course._id} className="hover:bg-gray-50">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="shadow-xl">
+            {courses.loading && courses.list.length === 0 ? (
+              <div className="py-12 text-center">
+                <Loader size="lg" />
+                <p className="text-gray-600 dark:text-gray-400 mt-4">Loading courses...</p>
+              </div>
+            ) : filteredCourses.length === 0 ? (
+              <EmptyState
+                icon={BookOpen}
+                title="No courses found"
+                description={
+                  filters.search || filters.status
+                    ? 'Try adjusting your filters'
+                    : 'Wait for tutors to create courses'
+                }
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-b-2 border-gray-200 dark:border-gray-600">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Course
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Tutor
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Stats
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <AnimatePresence>
+                      {filteredCourses.map((course, index) => (
+                        <motion.tr
+                          key={course._id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ duration: 0.3, delay: index * 0.03 }}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg mr-3">
@@ -214,7 +352,12 @@ const CoursesPage = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(course.isPublished)}
+                        {getStatusBadge(course)}
+                        {course.rejectionReason && (
+                          <p className="text-xs text-red-600 mt-1 max-w-xs truncate" title={course.rejectionReason}>
+                            {course.rejectionReason}
+                          </p>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="space-y-1">
@@ -240,24 +383,40 @@ const CoursesPage = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
-                          {!course.isPublished ? (
+                          {course.isPublished && !course.isApproved && !course.rejectionReason && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setSelectedCourse(course);
+                                  setShowApprovalModal(true);
+                                }}
+                                className="text-green-600 hover:text-green-700"
+                                title="Approve Course"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedCourse(course);
+                                  setShowRejectModal(true);
+                                }}
+                                className="text-red-600 hover:text-red-700"
+                                title="Reject Course"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          {course.rejectionReason && (
                             <button
                               onClick={() => {
                                 setSelectedCourse(course);
                                 setShowApprovalModal(true);
                               }}
                               className="text-green-600 hover:text-green-700"
-                              title="Approve Course"
+                              title="Approve After Review"
                             >
                               <CheckCircle className="w-4 h-4" />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleApproveCourse(course._id, false)}
-                              className="text-orange-600 hover:text-orange-700"
-                              title="Unpublish Course"
-                            >
-                              <Clock className="w-4 h-4" />
                             </button>
                           )}
                           <button
@@ -265,19 +424,20 @@ const CoursesPage = () => {
                               setSelectedCourse(course);
                               setShowDeleteModal(true);
                             }}
-                            className="text-red-600 hover:text-red-700"
+                            className="text-gray-600 hover:text-gray-700"
                             title="Delete Course"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              </div>
+            )}
 
           {/* Pagination */}
           {courses.totalPages > 1 && (
@@ -311,8 +471,9 @@ const CoursesPage = () => {
                 </Button>
               </div>
             </div>
-          )}
-        </Card>
+            )}
+          </Card>
+        </motion.div>
 
         {/* Approval Modal */}
         {selectedCourse && (
@@ -334,9 +495,7 @@ const CoursesPage = () => {
                 >
                   Cancel
                 </Button>
-                <Button
-                  onClick={() => handleApproveCourse(selectedCourse._id, true)}
-                >
+                <Button onClick={handleApproveCourse}>
                   Approve & Publish
                 </Button>
               </>
@@ -351,6 +510,17 @@ const CoursesPage = () => {
                   {selectedCourse.description}
                 </p>
               </div>
+              {selectedCourse.rejectionReason && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm font-medium text-red-900 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Previous Rejection Reason:
+                  </p>
+                  <p className="text-sm text-red-700 mt-1">
+                    {selectedCourse.rejectionReason}
+                  </p>
+                </div>
+              )}
               <div className="border-t pt-4">
                 <p className="text-sm font-medium text-gray-700 mb-2">
                   Course Details:
@@ -362,11 +532,79 @@ const CoursesPage = () => {
                     • Created:{' '}
                     {new Date(selectedCourse.createdAt).toLocaleDateString()}
                   </li>
+                  {selectedCourse.approvedAt && (
+                    <li>
+                      • Last Approved:{' '}
+                      {new Date(selectedCourse.approvedAt).toLocaleDateString()}
+                    </li>
+                  )}
                 </ul>
               </div>
               <p className="text-xs text-gray-500">
-                Approving this course will make it visible to all students
+                Approving this course will make it visible to all students and send a notification to the tutor.
               </p>
+            </div>
+          </Modal>
+        )}
+
+        {/* Rejection Modal */}
+        {selectedCourse && (
+          <Modal
+            isOpen={showRejectModal}
+            onClose={() => {
+              setShowRejectModal(false);
+              setSelectedCourse(null);
+              setRejectionReason('');
+            }}
+            title="Reject Course"
+            footer={
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setSelectedCourse(null);
+                    setRejectionReason('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button variant="danger" onClick={handleRejectCourse}>
+                  Reject & Notify Tutor
+                </Button>
+              </>
+            }
+          >
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {selectedCourse.title}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  by {selectedCourse.tutorId?.name}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Rejection <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Explain why this course needs improvement (e.g., unclear objectives, poor content structure, missing materials...)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  rows="4"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  This feedback will be sent to the tutor to help them improve the course.
+                </p>
+              </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm text-yellow-800">
+                  The tutor will be notified and can resubmit the course after making improvements.
+                </p>
+              </div>
             </div>
           </Modal>
         )}

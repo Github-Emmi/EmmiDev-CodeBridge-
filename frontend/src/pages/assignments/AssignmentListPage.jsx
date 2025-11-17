@@ -18,7 +18,7 @@ const AssignmentListPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { assignments, mySubmissions, loading } = useSelector((state) => state.assignment);
+  const { assignments, mySubmissions, loading } = useSelector((state) => state.assignments);
   const [filter, setFilter] = useState('all'); // all, pending, submitted, graded, overdue
   
   const isTutor = user?.role === 'tutor' || user?.role === 'admin';
@@ -273,7 +273,7 @@ const AssignmentListPage = () => {
           // Tutor View
           filteredAssignments.length === 0 ? (
             <EmptyState
-              icon={<DocumentTextIcon className="h-12 w-12" />}
+              icon={DocumentTextIcon}
               title="No assignments found"
               description={
                 filter === 'all'
@@ -394,7 +394,7 @@ const AssignmentListPage = () => {
           // Student View
           filteredSubmissions.length === 0 ? (
             <EmptyState
-              icon={<DocumentTextIcon className="h-12 w-12" />}
+              icon={DocumentTextIcon}
               title="No assignments found"
               description={
                 filter === 'all'

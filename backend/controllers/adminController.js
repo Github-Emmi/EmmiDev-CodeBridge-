@@ -297,12 +297,65 @@ exports.getAllCourses = async (req, res) => {
   }
 };
 
-// @desc    Approve/Publish course
+// @desc    Approve course
 // @route   PATCH /api/admin/courses/:id/approve
 // @access  Private/Admin
 exports.approveCourse = async (req, res) => {
   try {
-    const { isPublished } = req.body;
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Set approval fields
+    course.isApproved = true;
+    course.approvedBy = req.user.id;
+    course.approvedAt = Date.now();
+    course.rejectionReason = undefined;
+    await course.save();
+
+    // Notify tutor
+    await Notification.create({
+      userId: course.tutorId,
+      type: 'course_approved',
+      title: 'Course Approved',
+      message: `Your course "${course.title}" has been approved and is now visible to students.`,
+      metadata: { courseId: course._id },
+      priority: 'high'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Course approved successfully',
+      data: course
+    });
+  } catch (error) {
+    console.error('Approve course error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error approving course',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Reject course
+// @route   PATCH /api/admin/courses/:id/reject
+// @access  Private/Admin
+exports.rejectCourse = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rejection reason is required'
+      });
+    }
 
     const course = await Course.findById(req.params.id);
 
@@ -313,28 +366,33 @@ exports.approveCourse = async (req, res) => {
       });
     }
 
-    course.isPublished = isPublished;
+    // Set rejection fields
+    course.isApproved = false;
+    course.rejectionReason = reason;
+    course.approvedBy = undefined;
+    course.approvedAt = undefined;
     await course.save();
 
-    // Notify tutor
+    // Notify tutor with feedback
     await Notification.create({
       userId: course.tutorId,
-      type: 'course_approval',
-      title: isPublished ? 'Course Approved' : 'Course Unpublished',
-      message: `Your course "${course.title}" has been ${isPublished ? 'approved and published' : 'unpublished'}`,
-      metadata: { courseId: course._id }
+      type: 'course_rejected',
+      title: 'Course Requires Changes',
+      message: `Your course "${course.title}" needs improvements. Reason: ${reason}`,
+      metadata: { courseId: course._id, reason },
+      priority: 'high'
     });
 
     res.status(200).json({
       success: true,
-      message: `Course ${isPublished ? 'approved' : 'unpublished'} successfully`,
+      message: 'Course rejected with feedback sent to tutor',
       data: course
     });
   } catch (error) {
-    console.error('Approve course error:', error);
+    console.error('Reject course error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error updating course',
+      message: 'Error rejecting course',
       error: error.message
     });
   }

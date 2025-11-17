@@ -13,6 +13,8 @@ import TutorDashboard from './pages/tutor/Dashboard';
 import AdminDashboard from './pages/admin/Dashboard';
 import CoursesPage from './pages/courses/CoursesPage';
 import CourseDetailPage from './pages/courses/CourseDetailPage';
+import MyCoursesPage from './pages/courses/MyCoursesPage';
+import CourseCreatePage from './pages/courses/CourseCreatePage';
 import CommunityFeedPage from './pages/community/FeedPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import ChatPage from './pages/chat/ChatPage';
@@ -24,6 +26,7 @@ import AssignmentCreatePage from './pages/assignments/AssignmentCreatePage';
 import AssignmentSubmitPage from './pages/assignments/AssignmentSubmitPage';
 import AssignmentGradingPage from './pages/assignments/AssignmentGradingPage';
 import AssignmentDetailPage from './pages/assignments/AssignmentDetailPage';
+import AssignmentSubmissionsPage from './pages/assignments/AssignmentSubmissionsPage';
 
 // Admin Pages
 import UsersPage from './pages/admin/UsersPage';
@@ -139,6 +142,30 @@ function App() {
               <RoleRoute allowedRoles={['tutor']}>
                 <DashboardLayout>
                   <CoursesPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/my-courses" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <DashboardLayout>
+                  <MyCoursesPage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/courses/create" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <DashboardLayout>
+                  <CourseCreatePage />
                 </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>
@@ -375,6 +402,18 @@ function App() {
               <RoleRoute allowedRoles={['tutor']}>
                 <DashboardLayout>
                   <AssignmentCreatePage />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/tutor/assignments/:assignmentId/submissions" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['tutor']}>
+                <DashboardLayout>
+                  <AssignmentSubmissionsPage />
                 </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>

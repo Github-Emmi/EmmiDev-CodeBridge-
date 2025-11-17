@@ -8,7 +8,9 @@ const {
   deleteCourse,
   enrollInCourse,
   getCourseSchedule,
-  addRating
+  addRating,
+  approveCourse,
+  rejectCourse
 } = require('../controllers/courseController');
 const { protect, authorize, verifiedTutorOnly, optionalAuth } = require('../middleware/auth');
 
@@ -20,6 +22,10 @@ router.get('/:id', optionalAuth, getCourse);
 router.post('/', protect, authorize('tutor', 'admin'), verifiedTutorOnly, createCourse);
 router.put('/:id', protect, authorize('tutor', 'admin'), updateCourse);
 router.delete('/:id', protect, authorize('tutor', 'admin'), deleteCourse);
+
+// Protected routes - Admin only
+router.put('/:id/approve', protect, authorize('admin', 'superadmin'), approveCourse);
+router.put('/:id/reject', protect, authorize('admin', 'superadmin'), rejectCourse);
 
 // Protected routes - Student
 router.post('/:id/enroll', protect, enrollInCourse);

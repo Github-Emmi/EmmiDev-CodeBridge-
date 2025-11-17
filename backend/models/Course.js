@@ -118,6 +118,16 @@ const courseSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isApproved: {
+    type: Boolean,
+    default: false
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  approvedAt: Date,
+  rejectionReason: String,
   tags: [String],
   ratings: [{
     studentId: {

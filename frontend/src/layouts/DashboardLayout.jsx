@@ -51,9 +51,13 @@ const DashboardLayout = ({ children }) => {
       ],
       tutor: [
         { name: 'Dashboard', path: '/tutor/dashboard', icon: Home },
-        ...commonItems,
-        { name: 'My Courses', path: '/tutor/courses', icon: BookOpen },
+        { name: 'Community', path: '/community', icon: Users },
+        { name: 'Courses', path: '/courses', icon: BookOpen },
+        { name: 'My Courses', path: '/my-courses', icon: BookOpen },
+        { name: 'Chat', path: '/chat', icon: MessageSquare },
+        { name: 'Notifications', path: '/notifications', icon: Bell, badge: unreadCount },
         { name: 'Assignments', path: '/tutor/assignments', icon: FileText },
+        { name: 'Profile', path: '/profile', icon: User },
       ],
       admin: [
         { name: 'Dashboard', path: '/admin/dashboard', icon: Home },

@@ -23,6 +23,9 @@ const seedData = async () => {
     await Post.deleteMany({});
     await ChatRoom.deleteMany({});
     console.log('✅ Existing data cleared');
+    
+    // Wait a moment to ensure deletion is complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Create admin users
     console.log('👤 Creating admin users...');
@@ -160,6 +163,9 @@ const seedData = async () => {
       ],
       tags: ['javascript', 'react', 'node', 'mongodb', 'full-stack'],
       isPublished: true,
+      isApproved: true,
+      approvedBy: admin._id,
+      approvedAt: new Date(),
       maxStudents: 50,
       startDate: new Date('2025-01-15'),
       endDate: new Date('2025-04-15')
@@ -196,6 +202,9 @@ const seedData = async () => {
       ],
       tags: ['python', 'data-science', 'machine-learning', 'pandas'],
       isPublished: true,
+      isApproved: true,
+      approvedBy: admin._id,
+      approvedAt: new Date(),
       maxStudents: 40
     });
 
@@ -224,6 +233,9 @@ const seedData = async () => {
       ],
       tags: ['react-native', 'mobile', 'javascript', 'ios', 'android'],
       isPublished: true,
+      isApproved: true,
+      approvedBy: admin._id,
+      approvedAt: new Date(),
       maxStudents: 100
     });
 
@@ -304,44 +316,116 @@ const seedData = async () => {
     // Create sample posts
     console.log('📝 Creating community posts...');
     
+    // Tutor posts - only visible to tutors
     await Post.insertMany([
       {
         authorId: tutor1._id,
         contentText: '🎉 Welcome to EmmiDev CodeBridge! Excited to have you all here. Let\'s learn and grow together! #coding #learning',
         visibility: 'public',
         hashtags: ['coding', 'learning'],
-        likes: [students[0]._id, students[1]._id]
+        likes: [tutor2._id]
       },
       {
-        authorId: students[0]._id,
-        contentText: 'Just completed my first MERN project! 🚀 Thanks @EmmiDev for the amazing course!',
+        authorId: tutor2._id,
+        contentText: 'Just finished preparing a new Data Science module! Can\'t wait to share it with the students. Teaching is so rewarding! 💡 #teaching #datascience',
         visibility: 'public',
-        courseId: course1._id,
-        likes: [tutor1._id, students[1]._id],
+        hashtags: ['teaching', 'datascience'],
+        likes: [tutor1._id],
         comments: [
           {
             authorId: tutor1._id,
-            text: 'Congratulations! Keep up the great work! 👏',
+            text: 'That\'s awesome! Would love to collaborate on some content. 🤝',
+            createdAt: new Date()
+          }
+        ]
+      },
+      {
+        authorId: tutor1._id,
+        contentText: 'Pro tip for fellow educators: Use real-world examples when teaching algorithms. It makes concepts stick better! #teachingtips #education',
+        visibility: 'public',
+        hashtags: ['teachingtips', 'education'],
+        likes: [tutor2._id]
+      }
+    ]);
+
+    // Student posts - only visible to students
+    await Post.insertMany([
+      {
+        authorId: students[0]._id,
+        contentText: 'Just completed my first MERN project! 🚀 The feeling is incredible. Thanks to all the amazing resources here!',
+        visibility: 'public',
+        courseId: course1._id,
+        likes: [students[1]._id, students[2]._id],
+        comments: [
+          {
+            authorId: students[1]._id,
+            text: 'Congratulations! How long did it take you? 👏',
+            createdAt: new Date()
+          },
+          {
+            authorId: students[2]._id,
+            text: 'Amazing work! Can you share your project? Would love to see it!',
             createdAt: new Date()
           }
         ]
       },
       {
         authorId: students[1]._id,
-        contentText: 'Anyone else struggling with MongoDB aggregations? Would love some tips! #help #mongodb',
+        contentText: 'Anyone else struggling with MongoDB aggregations? Would love some study buddies! #help #mongodb #studygroup',
         visibility: 'public',
-        hashtags: ['help', 'mongodb'],
+        hashtags: ['help', 'mongodb', 'studygroup'],
+        likes: [students[0]._id],
         comments: [
           {
-            authorId: tutor1._id,
-            text: 'I\'ll be covering that in our next live class. Also check out the MongoDB docs!',
+            authorId: students[0]._id,
+            text: 'I struggled with that too! Let\'s create a study group. DM me! 📚',
+            createdAt: new Date()
+          }
+        ]
+      },
+      {
+        authorId: students[2]._id,
+        contentText: 'Finally understood React hooks! useState and useEffect are game changers. Who else is loving React? ⚛️ #react #javascript #webdev',
+        visibility: 'public',
+        hashtags: ['react', 'javascript', 'webdev'],
+        likes: [students[0]._id, students[1]._id],
+        comments: [
+          {
+            authorId: students[1]._id,
+            text: 'Yes! Wait till you discover custom hooks, mind blown! 🤯',
+            createdAt: new Date()
+          }
+        ]
+      },
+      {
+        authorId: students[0]._id,
+        contentText: 'Looking for someone to pair program with on weekends. Working on a portfolio project. Hit me up! 💻 #pairprogramming #collaboration',
+        visibility: 'public',
+        hashtags: ['pairprogramming', 'collaboration'],
+        likes: [students[2]._id]
+      },
+      {
+        authorId: students[1]._id,
+        contentText: 'Just landed my first freelance gig! All thanks to the skills I learned here. Dreams do come true! 🎉💪 #freelance #success',
+        visibility: 'public',
+        hashtags: ['freelance', 'success'],
+        likes: [students[0]._id, students[2]._id],
+        comments: [
+          {
+            authorId: students[0]._id,
+            text: 'Congratulations! That\'s inspiring! 🎊',
+            createdAt: new Date()
+          },
+          {
+            authorId: students[2]._id,
+            text: 'Amazing! Any tips for getting started with freelancing?',
             createdAt: new Date()
           }
         ]
       }
     ]);
 
-    console.log('✅ Posts created');
+    console.log('✅ Posts created (3 tutor posts, 5 student posts)');
 
     console.log('\n🎉 Seed data created successfully!\n');
     console.log('═══════════════════════════════════════════════════════════');
@@ -376,9 +460,10 @@ const seedData = async () => {
     console.log('\n📊 Database Summary:');
     console.log(`   • Users: 7 (2 Admins, 2 Tutors, 3 Students)`);
     console.log(`   • Courses: 3 (2 Paid, 1 Free)`);
-    console.log(`   • Posts: 3`);
+    console.log(`   • Posts: 8 (3 Tutor posts, 5 Student posts)`);
     console.log(`   • Chat Rooms: 3`);
     console.log('\n✅ You can now login with any of the above accounts!');
+    console.log('📝 Note: Students will only see student posts, Tutors will only see tutor posts');
     console.log('═══════════════════════════════════════════════════════════\n');
 
     process.exit(0);
