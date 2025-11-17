@@ -1,0 +1,96 @@
+# Render Blueprint for EmmiDev CodeBridge Backend
+# This file defines the infrastructure for deploying to Render.com
+
+services:
+  # Web Service (Node.js Backend API)
+  - type: web
+    name: emmidev-codebridge-api
+    env: node
+    region: oregon # Choose: oregon, frankfurt, singapore, ohio
+    plan: starter # Options: starter (free), standard, pro
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    
+    # Auto-deploy from Git
+    autoDeploy: true
+    
+    # Environment variables (set these in Render dashboard)
+    envVars:
+      - key: NODE_ENV
+        value: production
+      
+      - key: PORT
+        value: 10000 # Render uses port 10000 by default
+      
+      - key: MONGODB_URI
+        sync: false # Set manually in dashboard (contains sensitive data)
+      
+      - key: JWT_SECRET
+        generateValue: true # Auto-generate secure random value
+      
+      - key: JWT_EXPIRE
+        value: 30d
+      
+      - key: SESSION_SECRET
+        generateValue: true # Auto-generate secure random value
+      
+      - key: FRONTEND_URL
+        sync: false # Set to your frontend URL (e.g., https://yourapp.vercel.app)
+      
+      # OAuth - GitHub
+      - key: GITHUB_CLIENT_ID
+        sync: false # Set in dashboard
+      
+      - key: GITHUB_CLIENT_SECRET
+        sync: false # Set in dashboard
+      
+      - key: GITHUB_CALLBACK_URL
+        sync: false # Set to https://your-api.onrender.com/api/auth/github/callback
+      
+      # OAuth - LinkedIn
+      - key: LINKEDIN_CLIENT_ID
+        sync: false # Set in dashboard
+      
+      - key: LINKEDIN_CLIENT_SECRET
+        sync: false # Set in dashboard
+      
+      - key: LINKEDIN_CALLBACK_URL
+        sync: false # Set to https://your-api.onrender.com/api/auth/linkedin/callback
+      
+      # Cloudinary (optional)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      
+      # OpenAI (optional)
+      - key: OPENAI_API_KEY
+        sync: false
+      
+      # Paystack (optional)
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      
+      # Email (optional)
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      
+      - key: EMAIL_PORT
+        value: 587
+      
+      - key: EMAIL_USER
+        sync: false
+      
+      - key: EMAIL_PASSWORD
+        sync: false
+      
+      - key: EMAIL_FROM
+        value: EmmiDev CodeBridge <noreply@emmidevcode.com>
