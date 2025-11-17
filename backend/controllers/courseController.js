@@ -140,7 +140,8 @@ exports.createCourse = async (req, res) => {
       startDate,
       endDate,
       tags,
-      thumbnail
+      thumbnail,
+      schedule // New: Array of class sessions to create Zoom meetings for
     } = req.body;
 
     // Validation
@@ -167,6 +168,42 @@ exports.createCourse = async (req, res) => {
       tags,
       thumbnail
     });
+
+    // Create Zoom meetings for scheduled sessions
+    if (schedule && Array.isArray(schedule) && schedule.length > 0) {
+      const zoomService = require('../services/zoomService');
+      const zoomMeetings = [];
+
+      for (const session of schedule) {
+        try {
+          // Create Zoom meeting for each session
+          const meeting = await zoomService.createMeeting({
+            topic: `${title} - ${session.topic || 'Class Session'}`,
+            startTime: session.startTime,
+            duration: session.duration || 60,
+            autoRecording: 'cloud' // Auto-record to cloud
+          });
+
+          zoomMeetings.push({
+            zoomMeetingId: meeting.meetingId.toString(),
+            topic: session.topic || 'Class Session',
+            join_url: meeting.join_url,
+            start_url: meeting.start_url,
+            password: meeting.password,
+            startTime: new Date(session.startTime),
+            duration: session.duration || 60,
+            status: 'scheduled'
+          });
+        } catch (zoomError) {
+          console.error('Zoom meeting creation error:', zoomError);
+          // Continue creating other meetings even if one fails
+        }
+      }
+
+      // Add Zoom meetings to course schedule
+      course.schedule = zoomMeetings;
+      await course.save();
+    }
 
     // Create course group chat
     const chatRoom = await ChatRoom.create({
@@ -595,6 +632,320 @@ exports.rejectCourse = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error rejecting course',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Add Zoom meeting to course schedule
+// @route   POST /api/courses/:id/schedule
+// @access  Private (Tutor who created course)
+exports.addSchedule = async (req, res) => {
+  try {
+    const { topic, startTime, duration } = req.body;
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Check ownership
+    if (course.tutorId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to add schedule to this course'
+      });
+    }
+
+    // Validation
+    if (!startTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'Start time is required'
+      });
+    }
+
+    // Create Zoom meeting
+    const zoomService = require('../services/zoomService');
+    const meeting = await zoomService.createMeeting({
+      topic: `${course.title} - ${topic || 'Class Session'}`,
+      startTime,
+      duration: duration || 60,
+      autoRecording: 'cloud'
+    });
+
+    // Add to course schedule
+    course.schedule.push({
+      zoomMeetingId: meeting.meetingId.toString(),
+      topic: topic || 'Class Session',
+      join_url: meeting.join_url,
+      start_url: meeting.start_url,
+      password: meeting.password,
+      startTime: new Date(startTime),
+      duration: duration || 60,
+      status: 'scheduled'
+    });
+
+    await course.save();
+
+    // Notify all enrolled students
+    for (const enrollment of course.enrolledStudents) {
+      await Notification.create({
+        userId: enrollment.studentId,
+        type: 'new_class_scheduled',
+        title: 'New Class Scheduled',
+        message: `A new class session has been scheduled for ${course.title}`,
+        metadata: { 
+          courseId: course._id,
+          sessionDate: startTime
+        }
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Class session scheduled successfully',
+      data: course.schedule[course.schedule.length - 1]
+    });
+  } catch (error) {
+    console.error('Add schedule error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding schedule',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update Zoom meeting in course schedule
+// @route   PUT /api/courses/:id/schedule/:scheduleId
+// @access  Private (Tutor who created course)
+exports.updateSchedule = async (req, res) => {
+  try {
+    const { topic, startTime, duration } = req.body;
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Check ownership
+    if (course.tutorId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this schedule'
+      });
+    }
+
+    // Find schedule item
+    const scheduleItem = course.schedule.id(req.params.scheduleId);
+    if (!scheduleItem) {
+      return res.status(404).json({
+        success: false,
+        message: 'Schedule item not found'
+      });
+    }
+
+    // Update Zoom meeting if time/duration changed
+    if (startTime || duration) {
+      const zoomService = require('../services/zoomService');
+      const updateData = {};
+      
+      if (topic) updateData.topic = `${course.title} - ${topic}`;
+      if (startTime) updateData.start_time = startTime;
+      if (duration) updateData.duration = duration;
+
+      await zoomService.updateMeeting(scheduleItem.zoomMeetingId, updateData);
+    }
+
+    // Update course schedule
+    if (topic) scheduleItem.topic = topic;
+    if (startTime) scheduleItem.startTime = new Date(startTime);
+    if (duration) scheduleItem.duration = duration;
+
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Schedule updated successfully',
+      data: scheduleItem
+    });
+  } catch (error) {
+    console.error('Update schedule error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating schedule',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Delete Zoom meeting from course schedule
+// @route   DELETE /api/courses/:id/schedule/:scheduleId
+// @access  Private (Tutor who created course)
+exports.deleteSchedule = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Check ownership
+    if (course.tutorId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this schedule'
+      });
+    }
+
+    // Find schedule item
+    const scheduleItem = course.schedule.id(req.params.scheduleId);
+    if (!scheduleItem) {
+      return res.status(404).json({
+        success: false,
+        message: 'Schedule item not found'
+      });
+    }
+
+    // Delete Zoom meeting
+    const zoomService = require('../services/zoomService');
+    try {
+      await zoomService.deleteMeeting(scheduleItem.zoomMeetingId);
+    } catch (zoomError) {
+      console.error('Zoom delete error:', zoomError);
+      // Continue even if Zoom delete fails
+    }
+
+    // Remove from course schedule
+    scheduleItem.remove();
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Schedule deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete schedule error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting schedule',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get Zoom meeting join URL (for students)
+// @route   GET /api/courses/:id/schedule/:scheduleId/join
+// @access  Private (Enrolled students only)
+exports.getJoinUrl = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Check if student is enrolled
+    const isEnrolled = course.enrolledStudents.some(
+      e => e.studentId.toString() === req.user.id
+    );
+
+    if (!isEnrolled && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'You must be enrolled to join this class'
+      });
+    }
+
+    // Find schedule item
+    const scheduleItem = course.schedule.id(req.params.scheduleId);
+    if (!scheduleItem) {
+      return res.status(404).json({
+        success: false,
+        message: 'Schedule item not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        topic: scheduleItem.topic,
+        join_url: scheduleItem.join_url,
+        password: scheduleItem.password,
+        startTime: scheduleItem.startTime,
+        duration: scheduleItem.duration
+      }
+    });
+  } catch (error) {
+    console.error('Get join URL error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting join URL',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get Zoom meeting start URL (for tutor)
+// @route   GET /api/courses/:id/schedule/:scheduleId/start
+// @access  Private (Tutor who created course)
+exports.getStartUrl = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Check ownership
+    if (course.tutorId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the course tutor can start the meeting'
+      });
+    }
+
+    // Find schedule item
+    const scheduleItem = course.schedule.id(req.params.scheduleId);
+    if (!scheduleItem) {
+      return res.status(404).json({
+        success: false,
+        message: 'Schedule item not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        topic: scheduleItem.topic,
+        start_url: scheduleItem.start_url,
+        join_url: scheduleItem.join_url,
+        password: scheduleItem.password,
+        startTime: scheduleItem.startTime,
+        duration: scheduleItem.duration
+      }
+    });
+  } catch (error) {
+    console.error('Get start URL error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting start URL',
       error: error.message
     });
   }

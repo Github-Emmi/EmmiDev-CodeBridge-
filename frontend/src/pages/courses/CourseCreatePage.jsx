@@ -13,6 +13,8 @@ import {
   Users,
   Tag,
   Image,
+  Clock,
+  Video,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { DayPicker } from 'react-day-picker';
@@ -43,9 +45,16 @@ const CourseCreatePage = () => {
     tags: [],
     thumbnail: '',
     syllabus: [{ title: '', description: '', resources: [], order: 1 }],
+    schedule: [], // New: Array of class sessions
   });
 
   const [tagInput, setTagInput] = useState('');
+  const [scheduleModal, setScheduleModal] = useState(false);
+  const [currentSession, setCurrentSession] = useState({
+    topic: '',
+    startTime: '',
+    duration: 60
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -110,6 +119,36 @@ const CourseCreatePage = () => {
       syllabus: prev.syllabus.map((item, i) =>
         i === index ? { ...item, [field]: value } : item
       ),
+    }));
+  };
+
+  const addClassSession = () => {
+    if (!currentSession.topic || !currentSession.startTime) {
+      toast.error('Please fill in session topic and start time');
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      schedule: [
+        ...prev.schedule,
+        {
+          topic: currentSession.topic,
+          startTime: currentSession.startTime,
+          duration: currentSession.duration
+        }
+      ],
+    }));
+
+    setCurrentSession({ topic: '', startTime: '', duration: 60 });
+    setScheduleModal(false);
+    toast.success('Class session added');
+  };
+
+  const removeClassSession = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      schedule: prev.schedule.filter((_, i) => i !== index),
     }));
   };
 
@@ -502,11 +541,177 @@ const CourseCreatePage = () => {
                 </div>
               </motion.div>
 
-              {/* Thumbnail URL */}
+              {/* Class Schedule (Zoom Meetings) */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.55 }}
+                className="border-2 border-green-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-emerald-50"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Video className="h-5 w-5 text-green-600" />
+                    Live Class Schedule (Zoom)
+                  </label>
+                  <Button
+                    type="button"
+                    onClick={() => setScheduleModal(true)}
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Plus className="h-4 w-4" />}
+                    className="bg-white border-2 border-green-300 text-green-700 hover:bg-green-50"
+                  >
+                    Add Session
+                  </Button>
+                </div>
+
+                {formData.schedule.length > 0 ? (
+                  <div className="space-y-3">
+                    {formData.schedule.map((session, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="bg-white p-4 rounded-xl border-2 border-green-100 shadow-sm flex items-center justify-between"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{session.topic}</h4>
+                          <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {new Date(session.startTime).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                              })}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {new Date(session.startTime).toLocaleTimeString('en-US', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {session.duration} min
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeClassSession(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Video className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                    <p>No class sessions scheduled yet</p>
+                    <p className="text-sm">Add live Zoom sessions for your course</p>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Schedule Modal */}
+              <AnimatePresence>
+                {scheduleModal && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setScheduleModal(false)}
+                  >
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold text-gray-900">Add Class Session</h3>
+                        <button
+                          onClick={() => setScheduleModal(false)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-2">
+                            Session Topic *
+                          </label>
+                          <Input
+                            value={currentSession.topic}
+                            onChange={(e) => setCurrentSession({ ...currentSession, topic: e.target.value })}
+                            placeholder="e.g., Introduction to React Hooks"
+                            className="border-2 border-gray-200 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-2">
+                            Start Date & Time *
+                          </label>
+                          <Input
+                            type="datetime-local"
+                            value={currentSession.startTime}
+                            onChange={(e) => setCurrentSession({ ...currentSession, startTime: e.target.value })}
+                            className="border-2 border-gray-200 rounded-xl"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-2">
+                            Duration (minutes) *
+                          </label>
+                          <Input
+                            type="number"
+                            value={currentSession.duration}
+                            onChange={(e) => setCurrentSession({ ...currentSession, duration: parseInt(e.target.value) })}
+                            min="30"
+                            max="240"
+                            placeholder="60"
+                            className="border-2 border-gray-200 rounded-xl"
+                          />
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setScheduleModal(false)}
+                            className="flex-1 border-2 border-gray-300"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={addClassSession}
+                            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600"
+                          >
+                            Add Session
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Thumbnail URL */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
               >
                 <label className="block text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <Image className="h-5 w-5 text-indigo-600" />
@@ -526,7 +731,7 @@ const CourseCreatePage = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
+                transition={{ delay: 0.65 }}
                 className="flex justify-between items-center gap-3 pt-6 border-t-2 border-gray-200"
               >
                 <Button

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { login, clearError } from '../../redux/slices/authSlice';
-import { Eye, EyeOff, Mail, Lock, Github, Linkedin, Award, Sparkles, Code, Users } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Github, Award, Sparkles, Code, Users } from 'lucide-react';
 import AnimatedBackground from '../../components/landing/AnimatedBackground';
 import GradientButton from '../../components/ui/GradientButton';
 
@@ -91,13 +91,6 @@ const LoginPage = () => {
     // Remove /api from VITE_API_URL if it exists, or use base URL
     const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
     window.location.href = `${baseUrl}/api/auth/github`;
-  };
-
-  const handleLinkedInLogin = () => {
-    // Redirect to backend LinkedIn OAuth route
-    // Remove /api from VITE_API_URL if it exists, or use base URL
-    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    window.location.href = `${baseUrl}/api/auth/linkedin`;
   };
 
   return (
@@ -347,22 +340,14 @@ const LoginPage = () => {
               </div>
 
               {/* Social Login Buttons */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex justify-center">
                 <button
                   type="button"
                   onClick={handleGitHubLogin}
-                  className="flex items-center justify-center space-x-2 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white hover:bg-white/20 transition-all hover:shadow-lg hover:shadow-white/10"
+                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white hover:bg-white/20 transition-all hover:shadow-lg hover:shadow-white/10"
                 >
                   <Github className="h-5 w-5" />
                   <span className="text-sm font-medium">GitHub</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLinkedInLogin}
-                  className="flex items-center justify-center space-x-2 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white hover:bg-white/20 transition-all hover:shadow-lg hover:shadow-white/10"
-                >
-                  <Linkedin className="h-5 w-5" />
-                  <span className="text-sm font-medium">LinkedIn</span>
                 </button>
               </div>
 

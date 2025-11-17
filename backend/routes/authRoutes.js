@@ -42,29 +42,6 @@ router.get('/github/callback',
   }
 );
 
-// OAuth Routes - LinkedIn
-router.get('/linkedin', passport.authenticate('linkedin', { state: 'SOME STATE' }));
-router.get('/linkedin/callback',
-  passport.authenticate('linkedin', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login?error=linkedin_auth_failed` }),
-  (req, res) => {
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: req.user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '30d' }
-    );
-    
-    // Redirect to frontend with token
-    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role,
-      avatarUrl: req.user.avatarUrl
-    }))}`);
-  }
-);
-
 // Protected routes
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);

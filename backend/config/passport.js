@@ -1,7 +1,6 @@
 // backend/config/passport.js
 const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
-const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 const User = require('../models/User');
 
 // Serialize user for the session
@@ -66,60 +65,6 @@ passport.use(
         done(null, user);
       } catch (error) {
         console.error('GitHub OAuth error:', error);
-        done(error, null);
-      }
-    }
-  )
-);
-
-// LinkedIn Strategy
-passport.use(
-  new LinkedInStrategy(
-    {
-      clientID: process.env.LINKEDIN_CLIENT_ID,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-      callbackURL: process.env.LINKEDIN_CALLBACK_URL || 'http://localhost:5000/api/auth/linkedin/callback',
-      scope: ['r_emailaddress', 'r_liteprofile'],
-      state: true
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        // Extract email from profile
-        const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
-        
-        if (!email) {
-          return done(new Error('No email found in LinkedIn profile'), null);
-        }
-
-        // Check if user already exists
-        let user = await User.findOne({ email });
-
-        if (user) {
-          // Update user's LinkedIn info if they exist
-          if (!user.linkedinId) {
-            user.linkedinId = profile.id;
-            user.avatarUrl = user.avatarUrl || profile.photos[0]?.value;
-            await user.save();
-          }
-          return done(null, user);
-        }
-
-        // Create new user
-        user = await User.create({
-          name: profile.displayName || `${profile.name.givenName} ${profile.name.familyName}`,
-          email,
-          linkedinId: profile.id,
-          avatarUrl: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
-          role: 'student', // Default role
-          emailVerified: true, // LinkedIn emails are verified
-          isActive: true,
-          bio: profile.headline || 'Learning to code',
-          passwordHash: Math.random().toString(36).slice(-12) // Random password for OAuth users
-        });
-
-        done(null, user);
-      } catch (error) {
-        console.error('LinkedIn OAuth error:', error);
         done(error, null);
       }
     }
