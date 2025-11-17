@@ -21,12 +21,16 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('✅ Socket connected:', this.socket.id);
+      if (import.meta.env.DEV) {
+        console.log('✅ Socket connected:', this.socket.id);
+      }
       this.connected = true;
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ Socket disconnected:', reason);
+      if (import.meta.env.DEV) {
+        console.log('❌ Socket disconnected:', reason);
+      }
       this.connected = false;
     });
 
