@@ -24,6 +24,16 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     select: false
   },
+  githubId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
+  linkedinId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
   role: {
     type: String,
     enum: ['student', 'tutor', 'admin', 'superadmin'],

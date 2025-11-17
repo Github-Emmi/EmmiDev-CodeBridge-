@@ -252,6 +252,40 @@ exports.submitAssignment = async (req, res) => {
 
     await submission.save();
 
+    // Track achievement progress
+    const { checkAndUnlockAchievements } = require('./achievementController');
+    const StudentStats = require('../models/StudentStats');
+    const StudentActivity = require('../models/StudentActivity');
+    
+    // Update student stats
+    let studentStats = await StudentStats.findOne({ userId: req.user.id });
+    if (!studentStats) {
+      studentStats = await StudentStats.create({ userId: req.user.id });
+    }
+    studentStats.completedAssignments = await Submission.countDocuments({
+      studentId: req.user.id,
+      status: { $in: ['submitted', 'graded'] }
+    });
+    await studentStats.save();
+
+    // Create activity record
+    await StudentActivity.create({
+      userId: req.user.id,
+      activityType: 'assignment_submitted',
+      title: 'Assignment Submitted',
+      description: `Submitted "${assignment.title}"`,
+      icon: '📝',
+      metadata: {
+        assignmentId: assignment._id,
+        courseId: assignment.courseId
+      }
+    });
+
+    // Check for new achievements
+    await checkAndUnlockAchievements(req.user.id, 'assignment_submitted', {
+      assignmentId: assignment._id
+    });
+
     // Notify tutor (use assignment.tutorId instead of course.tutorId)
     await Notification.create({
       userId: assignment.tutorId,
@@ -333,6 +367,33 @@ exports.gradeSubmission = async (req, res) => {
     submission.gradedBy = req.user.id;
 
     await submission.save();
+
+    // Track achievement progress for graded assignment
+    const { checkAndUnlockAchievements } = require('./achievementController');
+    const StudentActivity = require('../models/StudentActivity');
+    
+    // Calculate percentage
+    const percentage = (finalScore / submission.assignmentId.maxScore) * 100;
+    
+    // Create activity record
+    await StudentActivity.create({
+      userId: submission.studentId,
+      activityType: 'assignment_graded',
+      title: 'Assignment Graded',
+      description: `Received ${percentage.toFixed(0)}% on "${submission.assignmentId.title}"`,
+      icon: percentage >= 90 ? '⭐' : percentage >= 70 ? '👍' : '📊',
+      metadata: {
+        assignmentId: submission.assignmentId._id,
+        courseId: course._id,
+        score: finalScore
+      }
+    });
+
+    // Check for new achievements
+    await checkAndUnlockAchievements(submission.studentId.toString(), 'assignment_graded', {
+      score: finalScore,
+      maxScore: submission.assignmentId.maxScore
+    });
 
     // Notify student
     const notification = await Notification.create({

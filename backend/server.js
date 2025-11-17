@@ -3,6 +3,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const session = require('express-session');
+const passport = require('./config/passport');
 const connectDB = require('./config/db');
 
 // Initialize Express App
@@ -27,6 +29,21 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware for passport
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-session-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Request Logging (Development)
 if (process.env.NODE_ENV === 'development') {
@@ -79,6 +96,7 @@ app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/achievements', require('./routes/achievementRoutes'));
 
 // Error Handler Middleware
 app.use((err, req, res, next) => {

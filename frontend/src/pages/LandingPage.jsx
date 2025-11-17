@@ -98,7 +98,7 @@ const Navbar = ({ isAuthenticated, user, navigate }) => {
         ? 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg shadow-2xl shadow-indigo-500/10 border-b border-white/10' 
         : 'bg-transparent'
     }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
@@ -228,12 +228,20 @@ const Navbar = ({ isAuthenticated, user, navigate }) => {
 };
 
 // Hero Section
-const HeroSection = ({ navigate }) => {
+const HeroSection = ({ navigate, isAuthenticated }) => {
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate('/student/dashboard');
+    } else {
+      navigate('/register');
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <AnimatedBackground />
       
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-32 text-center">
         <motion.h1 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -263,13 +271,13 @@ const HeroSection = ({ navigate }) => {
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
           className="flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
-          <Link 
-            to="/register"
+          <button
+            onClick={handleGetStarted}
             className="group bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition shadow-2xl flex items-center space-x-2"
           >
             <span>Start Learning Now</span>
             <ArrowRight className="group-hover:translate-x-1 transition" />
-          </Link>
+          </button>
           <button className="group bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/10 transition flex items-center space-x-2">
             <Play className="h-5 w-5" />
             <span>Watch Demo</span>
@@ -309,7 +317,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen">
       <Navbar isAuthenticated={isAuthenticated} user={user} navigate={navigate} />
-      <HeroSection navigate={navigate} />
+      <HeroSection navigate={navigate} isAuthenticated={isAuthenticated} />
       <FeaturesSection />
       <CoursesSection navigate={navigate} />
       <CommunitySection />
@@ -365,7 +373,7 @@ const FeaturesSection = () => {
 
   return (
     <section id="features" className="py-24 bg-gray-50 dark:bg-slate-900" ref={ref}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <motion.div 
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
@@ -437,7 +445,7 @@ const CoursesSection = ({ navigate }) => {
 
   return (
     <section id="courses" className="py-24 bg-white dark:bg-slate-900" ref={ref}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <motion.div 
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
@@ -516,7 +524,7 @@ const CommunitySection = () => {
 
   return (
     <section id="community" className="py-24 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-900" ref={ref}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <motion.div 
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
@@ -563,29 +571,75 @@ const CommunitySection = () => {
   );
 };
 
-// Testimonials Section
+// Testimonials Section with auto-scroll
 const TestimonialsSection = () => {
   const ref = React.useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   const testimonials = [
     {
+      name: "Chinedu Okafor",
+      role: "Senior Backend Developer at Flutterwave",
+      avatar: "https://ui-avatars.com/api/?name=Chinedu+Okafor&background=4F46E5&color=fff",
+      content: "From struggling to find a tech job in Lagos to becoming a Senior Backend Developer at Flutterwave! EmmiDev CodeBridge gave me the skills and confidence I needed. The MERN stack course was incredibly detailed and practical.",
+      rating: 5,
+      location: "Lagos, Nigeria"
+    },
+    {
+      name: "Aisha Abdullahi",
+      role: "Full Stack Developer at Paystack",
+      avatar: "https://ui-avatars.com/api/?name=Aisha+Abdullahi&background=10B981&color=fff",
+      content: "I was a civil engineer before discovering my passion for coding. Within 8 months of joining EmmiDev CodeBridge, I landed my dream job at Paystack. The community support and AI-powered learning tools made all the difference!",
+      rating: 5,
+      location: "Abuja, Nigeria"
+    },
+    {
+      name: "Emeka Nwankwo",
+      role: "Mobile App Developer (Freelance)",
+      avatar: "https://ui-avatars.com/api/?name=Emeka+Nwankwo&background=F59E0B&color=fff",
+      content: "Now earning $3,000+ monthly as a freelance React Native developer! EmmiDev taught me not just coding, but how to build a sustainable career. I went from zero to building apps for international clients.",
+      rating: 5,
+      location: "Port Harcourt, Nigeria"
+    },
+    {
+      name: "Fatima Bello",
+      role: "Data Scientist at Andela",
+      avatar: "https://ui-avatars.com/api/?name=Fatima+Bello&background=EC4899&color=fff",
+      content: "The Python for Data Science course changed my life! I transitioned from teaching to tech and now work remotely for Andela. The instructors are world-class and truly care about student success.",
+      rating: 5,
+      location: "Kano, Nigeria"
+    },
+    {
       name: "Oluwaseun Adeyemi",
-      role: "Software Engineer at Paystack",
-      content: "EmmiDev CodeBridge transformed my career. Within 6 months, I went from complete beginner to landing my dream job!",
-      rating: 5
+      role: "Frontend Engineer at Interswitch",
+      avatar: "https://ui-avatars.com/api/?name=Oluwaseun+Adeyemi&background=8B5CF6&color=fff",
+      content: "Started as a complete beginner with no tech background. Today, I'm building enterprise applications at Interswitch. EmmiDev's project-based learning approach is what set them apart. Real skills, real results!",
+      rating: 5,
+      location: "Ibadan, Nigeria"
     },
     {
-      name: "Grace Mwangi",
-      role: "Freelance Developer",
-      content: "The AI study assistant is a game-changer. It's like having a personal tutor available 24/7.",
-      rating: 5
+      name: "Ngozi Okonkwo",
+      role: "DevOps Engineer at Kuda Bank",
+      avatar: "https://ui-avatars.com/api/?name=Ngozi+Okonkwo&background=06B6D4&color=fff",
+      content: "From working in a pharmacy to becoming a DevOps Engineer! The career transition seemed impossible until I found EmmiDev CodeBridge. The mentorship program connected me with industry professionals who guided my journey.",
+      rating: 5,
+      location: "Enugu, Nigeria"
     },
     {
-      name: "Abdul Rahman",
-      role: "Full Stack Developer",
-      content: "The community support here is unmatched. I've made lifelong friends and collaborators.",
-      rating: 5
+      name: "Ibrahim Musa",
+      role: "Software Engineer at Microsoft (Remote)",
+      avatar: "https://ui-avatars.com/api/?name=Ibrahim+Musa&background=EF4444&color=fff",
+      content: "Living my dream! Working remotely for Microsoft from Lagos. EmmiDev CodeBridge prepared me for technical interviews and gave me the confidence to apply to top tech companies. The AI study assistant was invaluable!",
+      rating: 5,
+      location: "Lagos, Nigeria"
+    },
+    {
+      name: "Blessing Okoro",
+      role: "Full Stack Developer & Tech Entrepreneur",
+      avatar: "https://ui-avatars.com/api/?name=Blessing+Okoro&background=F97316&color=fff",
+      content: "Not only did I get a job, but I also launched my own tech startup! EmmiDev taught me full-stack development and entrepreneurial thinking. Now I employ 5 developers and we're building amazing products for African businesses.",
+      rating: 5,
+      location: "Calabar, Nigeria"
     }
   ];
 
@@ -593,7 +647,7 @@ const TestimonialsSection = () => {
     <section id="testimonials" className="py-24 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-900 dark:via-purple-900 dark:to-pink-900 relative overflow-hidden" ref={ref}>
       <div className="absolute inset-0 bg-grid-white/10"></div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
@@ -608,18 +662,36 @@ const TestimonialsSection = () => {
           </p>
         </motion.div>
 
-        <motion.div 
-          initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
-          variants={staggerContainer}
-          className="grid md:grid-cols-3 gap-8"
-        >
-          {testimonials.map((testimonial, index) => (
-            <motion.div key={index} variants={scaleIn}>
-              <TestimonialCard {...testimonial} />
+        {/* Auto-scrolling Testimonials */}
+        <div className="relative">
+          <div className="overflow-hidden">
+            <motion.div
+              className="flex gap-6"
+              animate={{
+                x: [0, -2400]
+              }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: 40,
+                  ease: "linear"
+                }
+              }}
+            >
+              {/* Duplicate testimonials for seamless loop */}
+              {[...testimonials, ...testimonials].map((testimonial, index) => (
+                <div key={index} className="flex-shrink-0 w-96">
+                  <TestimonialCard {...testimonial} />
+                </div>
+              ))}
             </motion.div>
-          ))}
-        </motion.div>
+          </div>
+          
+          {/* Gradient overlays for fade effect */}
+          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-indigo-600 to-transparent pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-purple-600 to-transparent pointer-events-none"></div>
+        </div>
 
         <div className="text-center mt-12">
           <GradientButton variant="secondary" size="lg" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
@@ -663,7 +735,7 @@ const Footer = () => {
 
   return (
     <footer className="bg-slate-900 dark:bg-black text-white py-16 border-t border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-5 gap-8 mb-12">
           {/* Brand Section */}
           <div className="md:col-span-2">

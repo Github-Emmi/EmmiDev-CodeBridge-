@@ -2,9 +2,11 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 
-const TestimonialCard = ({ name, role, quote, avatar, rating = 5 }) => {
+const TestimonialCard = ({ name, role, quote, content, avatar, rating = 5, location }) => {
+  const testimonialText = content || quote; // Support both 'content' and 'quote' props
+  
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 border border-gray-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 border border-gray-200 dark:border-slate-700 h-full flex flex-col">
       {/* Stars */}
       <div className="flex mb-6">
         {[...Array(rating)].map((_, i) => (
@@ -13,8 +15,8 @@ const TestimonialCard = ({ name, role, quote, avatar, rating = 5 }) => {
       </div>
       
       {/* Quote */}
-      <p className="text-gray-700 dark:text-gray-300 italic mb-6 leading-relaxed text-lg">
-        "{quote}"
+      <p className="text-gray-700 dark:text-gray-300 italic mb-6 leading-relaxed text-lg flex-grow">
+        "{testimonialText}"
       </p>
       
       {/* Profile */}
@@ -36,6 +38,9 @@ const TestimonialCard = ({ name, role, quote, avatar, rating = 5 }) => {
         <div>
           <h4 className="font-bold text-gray-900 dark:text-white text-lg">{name}</h4>
           <p className="text-sm text-gray-600 dark:text-gray-400">{role}</p>
+          {location && (
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">📍 {location}</p>
+          )}
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { useSocket } from './hooks/useSocket';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import OAuthCallback from './pages/auth/OAuthCallback';
 import StudentDashboard from './pages/student/Dashboard';
 import TutorDashboard from './pages/tutor/Dashboard';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -15,6 +16,7 @@ import CoursesPage from './pages/courses/CoursesPage';
 import CourseDetailPage from './pages/courses/CourseDetailPage';
 import MyCoursesPage from './pages/courses/MyCoursesPage';
 import CourseCreatePage from './pages/courses/CourseCreatePage';
+import AchievementsPage from './pages/student/AchievementsPage';
 import CommunityFeedPage from './pages/community/FeedPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import ChatPage from './pages/chat/ChatPage';
@@ -82,6 +84,9 @@ function App() {
           element={isAuthenticated ? <Navigate to={getDashboardByRole()} /> : <RegisterPage />} 
         />
         
+        {/* OAuth Callback Route */}
+        <Route path="/auth/callback" element={<OAuthCallback />} />
+        
         {/* Courses - With sidebar when authenticated */}
         <Route 
           path="/courses" 
@@ -116,6 +121,18 @@ function App() {
               <RoleRoute allowedRoles={['student']}>
                 <DashboardLayout>
                   <StudentDashboard />
+                </DashboardLayout>
+              </RoleRoute>
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/student/achievements" 
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={['student']}>
+                <DashboardLayout>
+                  <AchievementsPage />
                 </DashboardLayout>
               </RoleRoute>
             </PrivateRoute>

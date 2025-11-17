@@ -8,6 +8,7 @@ import notificationReducer from './slices/notificationSlice';
 import chatReducer from './slices/chatSlice';
 import aiReducer from './slices/aiSlice';
 import adminReducer from './slices/adminSlice';
+import achievementReducer from './slices/achievementSlice';
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ export const store = configureStore({
     chat: chatReducer,
     ai: aiReducer,
     admin: adminReducer,
+    achievements: achievementReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

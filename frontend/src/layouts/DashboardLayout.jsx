@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Award,
+  Trophy,
   Users,
   FileText,
   Settings,
@@ -47,6 +48,7 @@ const DashboardLayout = ({ children }) => {
     const roleItems = {
       student: [
         { name: 'Dashboard', path: '/student/dashboard', icon: Home },
+        { name: 'Achievements', path: '/student/achievements', icon: Trophy },
         ...commonItems,
       ],
       tutor: [
@@ -223,10 +225,8 @@ const DashboardLayout = ({ children }) => {
       )}
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-16">
-        <div className="min-h-[calc(100vh-4rem)]">
-          {children}
-        </div>
+      <main className="lg:ml-64 mt-16">
+        {children}
       </main>
     </div>
   );

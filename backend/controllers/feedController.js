@@ -172,6 +172,27 @@ exports.createPost = async (req, res) => {
 
     await post.populate('authorId', 'name email avatarUrl role verifiedTutor');
 
+    // Track achievement progress
+    const { checkAndUnlockAchievements } = require('./achievementController');
+    const StudentActivity = require('../models/StudentActivity');
+    
+    // Create activity record
+    await StudentActivity.create({
+      userId: req.user.id,
+      activityType: 'post_created',
+      title: 'Community Post Created',
+      description: contentText.substring(0, 100) + (contentText.length > 100 ? '...' : ''),
+      icon: '💬',
+      metadata: {
+        postId: post._id
+      }
+    });
+
+    // Check for new achievements
+    await checkAndUnlockAchievements(req.user.id, 'post_created', {
+      postId: post._id
+    });
+
     // TODO: Emit socket event for real-time update
     // io.emit('newPost', post);
 

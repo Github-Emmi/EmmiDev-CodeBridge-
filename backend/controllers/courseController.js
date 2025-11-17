@@ -359,6 +359,36 @@ exports.enrollInCourse = async (req, res) => {
       metadata: { courseId: course._id }
     });
 
+    // Track achievement progress
+    const { checkAndUnlockAchievements } = require('./achievementController');
+    const StudentStats = require('../models/StudentStats');
+    const StudentActivity = require('../models/StudentActivity');
+    
+    // Update student stats
+    let studentStats = await StudentStats.findOne({ userId: req.user.id });
+    if (!studentStats) {
+      studentStats = await StudentStats.create({ userId: req.user.id });
+    }
+    studentStats.totalCourses = (await User.findById(req.user.id)).enrolledCourses.length + 1;
+    await studentStats.save();
+
+    // Create activity record
+    await StudentActivity.create({
+      userId: req.user.id,
+      activityType: 'course_enrolled',
+      title: 'Course Enrolled',
+      description: `Enrolled in "${course.title}"`,
+      icon: '🎓',
+      metadata: {
+        courseId: course._id
+      }
+    });
+
+    // Check for new achievements
+    await checkAndUnlockAchievements(req.user.id, 'course_enrolled', {
+      courseId: course._id
+    });
+
     res.status(200).json({
       success: true,
       message: 'Enrolled successfully',

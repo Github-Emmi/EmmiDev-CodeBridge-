@@ -6,6 +6,12 @@ const Course = require('./models/Course');
 const Post = require('./models/Post');
 const ChatRoom = require('./models/ChatRoom');
 
+// Helper function to hash password
+const hashPassword = async (password) => {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(password, salt);
+};
+
 const seedData = async () => {
   try {
     // Connect to MongoDB
@@ -84,11 +90,13 @@ const seedData = async () => {
     // Create student users
     console.log('👨‍🎓 Creating student users...');
     
+    const hashedPassword = await hashPassword('password123');
+    
     const students = await User.insertMany([
       {
         name: 'John Doe',
         email: 'john@student.com',
-        passwordHash: 'password123', // Model will hash this automatically
+        passwordHash: hashedPassword,
         role: 'student',
         bio: 'Aspiring web developer',
         avatarUrl: 'https://ui-avatars.com/api/?name=John+Doe&background=3B82F6&color=fff',
@@ -97,7 +105,7 @@ const seedData = async () => {
       {
         name: 'Jane Smith',
         email: 'jane@student.com',
-        passwordHash: 'password123', // Model will hash this automatically
+        passwordHash: hashedPassword,
         role: 'student',
         bio: 'Learning mobile development',
         avatarUrl: 'https://ui-avatars.com/api/?name=Jane+Smith&background=EC4899&color=fff',
@@ -106,7 +114,7 @@ const seedData = async () => {
       {
         name: 'Mike Wilson',
         email: 'mike@student.com',
-        passwordHash: 'password123', // Model will hash this automatically
+        passwordHash: hashedPassword,
         role: 'student',
         bio: 'Data science enthusiast',
         avatarUrl: 'https://ui-avatars.com/api/?name=Mike+Wilson&background=F59E0B&color=fff',

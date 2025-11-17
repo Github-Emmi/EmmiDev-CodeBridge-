@@ -86,6 +86,20 @@ const LoginPage = () => {
     dispatch(login(formData));
   };
 
+  const handleGitHubLogin = () => {
+    // Redirect to backend GitHub OAuth route
+    // Remove /api from VITE_API_URL if it exists, or use base URL
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    window.location.href = `${baseUrl}/api/auth/github`;
+  };
+
+  const handleLinkedInLogin = () => {
+    // Redirect to backend LinkedIn OAuth route
+    // Remove /api from VITE_API_URL if it exists, or use base URL
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    window.location.href = `${baseUrl}/api/auth/linkedin`;
+  };
+
   return (
     <div className="min-h-screen flex bg-slate-900 relative overflow-hidden">
       {/* Animated Background */}
@@ -336,6 +350,7 @@ const LoginPage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
+                  onClick={handleGitHubLogin}
                   className="flex items-center justify-center space-x-2 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white hover:bg-white/20 transition-all hover:shadow-lg hover:shadow-white/10"
                 >
                   <Github className="h-5 w-5" />
@@ -343,6 +358,7 @@ const LoginPage = () => {
                 </button>
                 <button
                   type="button"
+                  onClick={handleLinkedInLogin}
                   className="flex items-center justify-center space-x-2 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white hover:bg-white/20 transition-all hover:shadow-lg hover:shadow-white/10"
                 >
                   <Linkedin className="h-5 w-5" />

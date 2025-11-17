@@ -1,6 +1,7 @@
 // frontend/src/components/landing/CourseCard.jsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { Play, Star, Clock } from 'lucide-react';
 
 const CourseCard = ({ 
@@ -14,6 +15,21 @@ const CourseCard = ({
   image,
   gradient = 'from-indigo-500 to-purple-600'
 }) => {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  const handleEnrollClick = (e) => {
+    e.preventDefault();
+    
+    if (!isAuthenticated) {
+      // Redirect to login page with return URL
+      navigate('/login', { state: { from: `/courses/${id}` } });
+    } else {
+      // Navigate to course detail page
+      navigate(`/courses/${id}`);
+    }
+  };
+
   return (
     <div className="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-indigo-500/20 transition-all duration-300 hover:-translate-y-2">
       {/* Thumbnail with Play Button Overlay */}
@@ -70,12 +86,12 @@ const CourseCard = ({
           <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             {price}
           </span>
-          <Link 
-            to={`/courses/${id}`}
+          <button
+            onClick={handleEnrollClick}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-300 text-sm"
           >
             Enroll Now
-          </Link>
+          </button>
         </div>
       </div>
     </div>
