@@ -249,6 +249,116 @@ npm test
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+
+
+# EmmiDev CodeBridge
+
+A modern, MERN-based learning platform connecting YouTube learners with verified tutors through live Zoom classes, structured coursework, and peer community collaboration. Designed specifically for African learners with optimization for low bandwidth and practical career outcomes.
+
+## 🚀 Problem & Opportunity
+
+Many African learners face limited access to structured software training, verified mentorship, and professional project environments. EmmiDev CodeBridge addresses this gap by combining live instruction, peer collaboration, assignment-driven learning, and AI personalization in a scalable marketplace.
+
+## ✨ Core Features
+
+- **Verified Tutor Marketplace** - Quality-assured tutors with admin oversight
+- **Live Classes Integration** - Scheduled Zoom sessions + WebRTC for office hours
+- **Assignment Workflow** - Create, submit, and grade assignments with AI pre-grading assistance
+- **Community Feed** - Facebook-style feed and course groups for peer support
+- **AI Assistant** - Personalized recommendations, progress scoring, lecture summarization
+- **Admin Console** - Comprehensive user, course, payment, and analytics management
+
+## 🎯 Target Users
+
+- YouTube followers and self-learners in Africa (primary)
+- Junior developers seeking mentorship and portfolio projects
+- Verified tutors and bootcamps (supply side)
+- NGOs/schools seeking structured remote training (B2B)
+
+## 🛠 Tech Stack
+
+### Frontend
+- React + Redux Toolkit + Tailwind CSS + Framer Motion
+
+### Backend
+- Node.js + Express (REST APIs)
+
+### Database & Storage
+- MongoDB Atlas (users, courses, assignments, messages)
+- Cloudinary (images, file uploads)
+
+### Real-time & Video
+- Socket.io (chat, notifications, WebRTC signaling)
+- Zoom API (scheduled classes) + WebRTC (1:1/small sessions)
+
+### AI/ML
+- OpenAI (GPT + embeddings), Whisper (transcription)
+- TensorFlow.js (client-side ML)
+
+### Payments & Deployment
+- Paystack (Nigeria) / Stripe fallback
+- Vercel (frontend), Render/Railway/DigitalOcean (backend)
+- Docker, MongoDB Atlas, Redis (caching)
+
+## 📋 API Endpoints
+
+| Category | Key Endpoints |
+|----------|---------------|
+| Auth | `POST /api/auth/register`, `POST /api/auth/login` |
+| Courses | `GET /api/courses`, `POST /api/courses`, `POST /api/courses/:id/enroll` |
+| Zoom | `POST /api/zoom/create`, `GET /api/courses/:id/schedule` |
+| Assignments | `POST /api/assignments`, `POST /api/assignments/:id/submit` |
+| Community | `GET/POST /api/feeds` |
+| AI | `POST /api/ai/recommend` (userId, courseId → resources) |
+| Payments | `POST /api/payments/init`, `POST /api/payments/webhook` |
+| Admin | `GET /api/admin/users`, `PATCH /api/admin/courses/:id/assign` |
+
+## 🎯 MVP Scope & Roadmap
+
+### Priority Features (8-Week Sprint)
+
+**Week 0**: Repo setup, CI, Tailwind config, baseline pages
+**Weeks 1-2**: Auth, course CRUD, enrollment UI
+**Week 3**: Zoom integration, student dashboard
+**Week 4**: Assignment workflow with Cloudinary uploads
+**Week 5**: Real-time chat, community feed
+**Week 6**: Admin features, payment integration
+**Week 7**: AI endpoints, transcription pipeline
+**Week 8**: Polish, testing, deployment, demo
+
+## 📊 Success Metrics
+
+- DAU/MAU engagement rates
+- Assignment submission rates (% of enrolled students)
+- Tutor retention & course creation rates
+- Conversion funnel (visitor → registered → paid)
+- Live class session duration
+- LTV:CAC for paid courses & enterprise
+
+## 💰 Monetization Strategy
+
+- Pay-per-course & subscription tiers
+- Premium features (1:1 mentoring, certificates, job placement)
+- B2B licensing to schools/bootcamps
+- Marketplace fees from tutor payouts
+
+## ⚠️ Risks & Mitigations
+
+- **Zoom costs**: Fallback to Jitsi/Agora for in-app video
+- **AI costs**: Cache embeddings, batch calls, rule-based fallback
+- **Content moderation**: Admin tools + AI filters pipeline
+
+## 🚀 Next Steps
+
+Seeking mentorship/funding to:
+- Scale AI features (embeddings + tutor recommendation)
+- Subsidize Zoom concurrency for initial cohort
+- Develop demo-ready staging with core flows
+
+---
+
+*EmmiDev CodeBridge - Bridging the gap between self-learning and professional mentorship*
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
