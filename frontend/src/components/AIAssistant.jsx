@@ -123,7 +123,7 @@ const AIAssistant = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-50 group"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-50 group"
           aria-label="Open AI Assistant"
         >
           <SparklesIcon className="h-6 w-6 animate-pulse" />
@@ -143,9 +143,23 @@ const AIAssistant = () => {
 
       {/* Chat Widget */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden animate-slide-in">
+        <div
+          className="fixed inset-0 flex items-end sm:items-end md:items-center justify-center z-50"
+        >
+          {/* Overlay for mobile/modal */}
+            <div
+              className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-md backdrop-saturate-150 sm:hidden"
+              style={{ WebkitBackdropFilter: 'blur(16px) saturate(150%)' }}
+              onClick={() => setIsOpen(false)}
+            />
+          <div
+            className="relative w-full max-w-full sm:max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl h-[80vh] max-h-[600px] sm:h-[600px] sm:bottom-6 sm:right-6 bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-in mx-0 sm:mx-0"
+            style={{
+              boxShadow: '0 10px 32px 0 rgba(80, 63, 205, 0.15)',
+            }}
+          >
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 flex items-center justify-between rounded-t-2xl sm:rounded-t-2xl">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -160,7 +174,7 @@ const AIAssistant = () => {
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white/80 hover:text-white transition"
+              className="text-white/80 hover:text-white transition sm:block block"
               aria-label="Close AI Assistant"
             >
               <XMarkIcon className="h-6 w-6" />
@@ -388,6 +402,7 @@ const AIAssistant = () => {
               )}
             </div>
           )}
+          </div>
         </div>
       )}
     </>

@@ -187,7 +187,8 @@ const DashboardLayout = ({ children }) => {
       {isSidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-30">
           <div
-            className="fixed inset-0 bg-black bg-opacity-50"
+            className="fixed inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-md backdrop-saturate-150"
+            style={{ WebkitBackdropFilter: 'blur(16px) saturate(150%)' }}
             onClick={() => setIsSidebarOpen(false)}
           />
           <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white shadow-lg overflow-y-auto">

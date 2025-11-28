@@ -181,7 +181,7 @@ const Navbar = ({ isAuthenticated, user, navigate }) => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-slate-900 shadow-lg border-t border-gray-200 dark:border-slate-800 animate-slide-down">
+        <div className="md:hidden bg-white/70 dark:bg-slate-900/70 backdrop-blur-md backdrop-saturate-150 shadow-lg border-t border-gray-200 dark:border-slate-800 animate-slide-down" style={{ WebkitBackdropFilter: 'blur(16px) saturate(150%)' }}>
           <div className="px-4 py-6 space-y-4">
             {navLinks.map((link) => (
               <a
