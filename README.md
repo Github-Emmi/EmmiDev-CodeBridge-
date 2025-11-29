@@ -22,6 +22,9 @@
 
 ---
 
+## Live Deployment:
+https://emmidev-codebridge.vercel.app/
+
 ## 🌟 Features
 
 ### Core Features
