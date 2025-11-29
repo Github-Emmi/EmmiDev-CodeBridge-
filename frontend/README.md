@@ -109,7 +109,11 @@ The frontend connects to the backend through:
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 
----
+## Website
 
-**Built with React + Vite + Redux + TailwindCSS by EmmiDev**
+https://emmidevcode.com
+
+## Author
+
+Emmanuel Aghason (EmmiDev)
 
