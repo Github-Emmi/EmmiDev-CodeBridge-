@@ -15,12 +15,15 @@
 
 
 
-
 # EmmiDev-CodeBridge 🎓
 
 **EmmiDev-CodeBridge** is a next-generation, AI-powered learning platform designed to bridge the gap between learners and expert tutors. Built for scale and real-time collaboration, it empowers students, tutors, and administrators with a seamless educational experience—combining live classes, intelligent study assistance, and a vibrant learning community.
 
 ---
+
+## Live Deployment:
+https://emmidev-codebridge.vercel.app/
+
 
 ## 🌟 Features
 
