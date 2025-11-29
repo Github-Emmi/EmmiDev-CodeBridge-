@@ -1,5 +1,6 @@
 const Message = require('../models/Message');
 const ChatRoom = require('../models/ChatRoom');
+const ChatHistory = require('../models/ChatHistory');
 
 // @desc    Get all chat rooms for user
 // @route   GET /api/chat/rooms
@@ -211,3 +212,61 @@ exports.deleteMessage = async (req, res) => {
     });
   }
 };
+
+// --- AI Assistant Chat History ---
+
+// Create a new AI Assistant chat conversation
+exports.createAIChat = async (req, res) => {
+  try {
+    const { conversationName } = req.body;
+    const chat = await ChatHistory.create({
+      userId: req.user.id,
+      conversationName: conversationName || 'Untitled Chat',
+      messages: []
+    });
+    res.status(201).json({ success: true, data: chat });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to create chat', error: error.message });
+  }
+};
+
+// Get all AI Assistant chat conversations for a user
+exports.getAIChats = async (req, res) => {
+  try {
+    const chats = await ChatHistory.find({ userId: req.user.id }).sort({ updatedAt: -1 });
+    res.status(200).json({ success: true, data: chats });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch chats', error: error.message });
+  }
+};
+
+// Get a single AI Assistant chat conversation by ID
+exports.getAIChatById = async (req, res) => {
+  try {
+    const chat = await ChatHistory.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!chat) {
+      return res.status(404).json({ success: false, message: 'Chat not found' });
+    }
+    res.status(200).json({ success: true, data: chat });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch chat', error: error.message });
+  }
+};
+
+// Add a message to an AI Assistant chat conversation
+exports.addAIMessage = async (req, res) => {
+  try {
+    const { sender, content } = req.body;
+    const chat = await ChatHistory.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!chat) {
+      return res.status(404).json({ success: false, message: 'Chat not found' });
+    }
+    chat.messages.push({ sender, content });
+    await chat.save();
+    res.status(200).json({ success: true, data: chat });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to add message', error: error.message });
+  }
+};
+
+// --- End AI Assistant Chat History ---

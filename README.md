@@ -15,40 +15,39 @@
 
 
 
+
 # EmmiDev-CodeBridge 🎓
 
-A comprehensive MERN learning platform connecting YouTube followers with verified tutors through live Zoom classes, AI-powered study recommendations, community features, and real-time collaboration.
+**EmmiDev-CodeBridge** is a next-generation, AI-powered learning platform designed to bridge the gap between learners and expert tutors. Built for scale and real-time collaboration, it empowers students, tutors, and administrators with a seamless educational experience—combining live classes, intelligent study assistance, and a vibrant learning community.
+
+---
 
 ## 🌟 Features
 
 ### Core Features
-- **User Management**: Multi-role system (Student, Tutor, Admin, Superadmin)
-- **Course Management**: Full CRUD with enrollment, ratings, and progress tracking
-- **Live Classes**: Zoom API integration for scheduled video sessions
-- **Assignment System**: Create, submit, grade with AI-assisted pre-grading
-- **Test System**: Create tests with multiple question types and auto-grading
-- **Payment Processing**: Paystack integration for course payments
-- **Community Feed**: Social platform with posts, likes, comments, and media
-- **Real-time Chat**: Socket.io powered group and direct messaging
-- **Notifications**: In-app notification system with real-time updates
-- **AI Recommendations**: OpenAI-powered study plans and resource suggestions
+- **Multi-Role User Management:** Robust authentication and authorization for Students, Tutors, Admins, and Superadmins.
+- **Course Management:** Create, update, enroll, and track progress with ratings and analytics.
+- **Live Classes:** Integrated Zoom video sessions for real-time learning.
+- **Assignments & Tests:** Full assignment lifecycle with AI-assisted pre-grading and auto-graded tests.
+- **Payments:** Secure Paystack integration for course purchases.
+- **Community Feed:** Social platform for posts, comments, likes, and media sharing.
+- **Real-Time Chat & Notifications:** Group and direct messaging, typing indicators, and instant alerts.
 
 ### AI-Powered Features
-- Study recommendations based on progress
-- Textbook and resource suggestions
-- Performance analysis and insights
-- Automated assignment pre-grading
-- Personalized study plans
-- Question answering assistant
-- Video transcript summarization
+- **AI Study Assistant:** Multi-model support (OpenRouter, Kwaipilot, Grok) for coding help, study recommendations, and general Q&A.
+- **Personalized Study Plans:** Adaptive recommendations based on user progress and goals.
+- **Resource Suggestions:** Intelligent textbook and material recommendations.
+- **Performance Insights:** Automated analysis and feedback on assignments and tests.
+- **Assignment Pre-Grading:** AI-powered feedback before tutor review.
+- **Video Transcript Summarization:** Quick insights from class recordings.
 
 ### Real-time Features
-- Live chat in course groups
-- Direct messaging
-- Typing indicators
-- Real-time notifications
-- WebRTC video calls support
-- Community feed updates
+- **Live Group Chat:** Socket.io-powered messaging in courses and direct messages.
+- **Instant Notifications:** Real-time updates for assignments, classes, and community activity.
+- **WebRTC Video Calls:** Seamless video communication for classes and meetings.
+- **Dynamic Community Feed:** Live updates for posts, comments, and interactions.
+
+---
 
 ## 🏗️ Architecture
 

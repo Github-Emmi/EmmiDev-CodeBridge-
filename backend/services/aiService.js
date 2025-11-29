@@ -3,13 +3,44 @@ const OpenAI = require('openai');
 class AIService {
   constructor() {
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+      apiKey: process.env.OPENROUTER_API_KEY,
+      baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1'
     });
-    this.model = 'gpt-3.5-turbo';
+    this.models = {
+      kwaipilot: process.env.KWAIPILOT_MODEL, // kwaipilot/kat-coder-pro:free
+      grok: process.env.GROK_MODEL            // x-ai/grok-4.1-fast:free
+    };
+    // Note: Embeddings may not be supported on all OpenRouter models
     this.embeddingModel = 'text-embedding-3-small';
   }
 
-  // Generate study recommendations based on user progress
+  // General chat method with model selection and reasoning support
+  async chat({ messages, task = 'general', reasoning = false, reasoningDetails = [] }) {
+    let model;
+    let payload = { model, messages };
+
+    if (task === 'coding') {
+      model = this.models.kwaipilot;
+      payload.model = model;
+    } else if (task === 'recommendation' || task === 'research') {
+      model = this.models.grok;
+      payload.model = model;
+      // Only add reasoning_details if present and non-empty
+      if (reasoningDetails && reasoningDetails.length > 0) {
+        payload.reasoning_details = reasoningDetails;
+      }
+      // If OpenAI API expects a boolean for 'reasoning', ensure it's a boolean, otherwise omit
+      // Remove 'reasoning' if not required by OpenAI API spec
+    } else {
+      model = this.models.grok;
+      payload.model = model;
+    }
+
+    const response = await this.openai.chat.completions.create(payload);
+    return response;
+  }
+
+  // Generate study recommendations using Grok (recommendation task)
   async getStudyRecommendations(userId, courseId, userProgress) {
     try {
       const prompt = `
@@ -34,8 +65,7 @@ Provide recommendations in the following JSON format:
 }
 `;
 
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
+      const response = await this.chat({
         messages: [
           {
             role: 'system',
@@ -46,18 +76,87 @@ Provide recommendations in the following JSON format:
             content: prompt
           }
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7
+        task: 'recommendation',
+        reasoning: true
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      let parsed;
+      try {
+        parsed = JSON.parse(response.choices[0].message.content);
+      } catch (e) {
+        parsed = null;
+      }
+      // Defensive: If parsed is not an object or missing recommendations, use fallback
+      let recommendationsArr = [];
+      if (!parsed || !parsed.recommendations || !Array.isArray(parsed.recommendations)) {
+        recommendationsArr = [
+          {
+            title: 'Stay Consistent',
+            description: 'Set aside regular study time each day to build a habit.',
+            priority: 'high',
+            category: 'study_habit',
+            estimatedTime: '30'
+          },
+          {
+            title: 'Review Past Material',
+            description: 'Go over previous lessons to reinforce your understanding.',
+            priority: 'medium',
+            category: 'concept_review',
+            estimatedTime: '20'
+          }
+        ];
+      } else {
+        recommendationsArr = parsed.recommendations;
+      }
+
+      // Map recommendations into frontend structure
+      const courses = recommendationsArr
+        .filter(r => r.category === 'resource' || r.category === 'course')
+        .map(r => ({ title: r.title, reason: r.description }));
+      const books = recommendationsArr
+        .filter(r => r.category === 'book' || r.title.toLowerCase().includes('book'))
+        .map(r => r.title);
+      const studyPlan = recommendationsArr
+        .filter(r => r.category === 'study_habit' || r.category === 'concept_review' || r.category === 'practice')
+        .map(r => `• ${r.title}: ${r.description} (${r.estimatedTime} min)`).join('\n');
+
+      return {
+        courses,
+        books,
+        studyPlan,
+        recommendations: recommendationsArr
+      };
     } catch (error) {
       console.error('AI study recommendations error:', error);
-      throw new Error('Failed to generate study recommendations');
+      // Fallback: Always return at least a default recommendation
+      // Defensive fallback for error case
+      const recommendationsArr = [
+        {
+          title: 'Stay Consistent',
+          description: 'Set aside regular study time each day to build a habit.',
+          priority: 'high',
+          category: 'study_habit',
+          estimatedTime: '30'
+        },
+        {
+          title: 'Review Past Material',
+          description: 'Go over previous lessons to reinforce your understanding.',
+          priority: 'medium',
+          category: 'concept_review',
+          estimatedTime: '20'
+        }
+      ];
+      return {
+        courses: [],
+        books: [],
+        studyPlan: recommendationsArr
+          .map(r => `• ${r.title}: ${r.description} (${r.estimatedTime} min)`).join('\n'),
+        recommendations: recommendationsArr
+      };
     }
   }
 
-  // Generate textbook/resource recommendations
+  // Generate resource recommendations using Grok (recommendation task)
   async getResourceRecommendations(courseTitle, courseDescription, currentTopic) {
     try {
       const prompt = `
@@ -90,8 +189,7 @@ Return in JSON format:
 }
 `;
 
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
+      const response = await this.chat({
         messages: [
           {
             role: 'system',
@@ -102,8 +200,8 @@ Return in JSON format:
             content: prompt
           }
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7
+        task: 'recommendation',
+        reasoning: true
       });
 
       return JSON.parse(response.choices[0].message.content);
@@ -113,7 +211,7 @@ Return in JSON format:
     }
   }
 
-  // Generate embeddings for content
+  // Generate embeddings for content (may not be supported on OpenRouter free models)
   async generateEmbedding(text) {
     try {
       const response = await this.openai.embeddings.create({
@@ -128,7 +226,7 @@ Return in JSON format:
     }
   }
 
-  // Analyze student performance and provide insights
+  // Analyze student performance and provide insights using Grok
   async analyzePerformance(submissions, assignments) {
     try {
       const performanceData = submissions.map((sub, idx) => ({
@@ -155,8 +253,7 @@ Provide analysis in JSON format:
 }
 `;
 
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
+      const response = await this.chat({
         messages: [
           {
             role: 'system',
@@ -167,8 +264,8 @@ Provide analysis in JSON format:
             content: prompt
           }
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7
+        task: 'recommendation',
+        reasoning: true
       });
 
       return JSON.parse(response.choices[0].message.content);
@@ -178,7 +275,7 @@ Provide analysis in JSON format:
     }
   }
 
-  // Auto-grade submission (assistant for tutors)
+  // Auto-grade submission (assistant for tutors) using Kwaipilot (coding task)
   async preGradeSubmission(assignmentDescription, rubric, submissionText) {
     try {
       const prompt = `
@@ -203,8 +300,7 @@ Provide grading in JSON format:
 }
 `;
 
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
+      const response = await this.chat({
         messages: [
           {
             role: 'system',
@@ -215,8 +311,7 @@ Provide grading in JSON format:
             content: prompt
           }
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.5 // Lower temperature for more consistent grading
+        task: 'coding'
       });
 
       return JSON.parse(response.choices[0].message.content);
@@ -226,11 +321,10 @@ Provide grading in JSON format:
     }
   }
 
-  // Summarize video transcript
+  // Summarize video transcript using Grok (general task)
   async summarizeTranscript(transcript) {
     try {
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
+      const response = await this.chat({
         messages: [
           {
             role: 'system',
@@ -240,8 +334,7 @@ Provide grading in JSON format:
             role: 'user',
             content: `Summarize this class transcript into key points and actionable notes:\n\n${transcript}`
           }
-        ],
-        temperature: 0.5
+        ]
       });
 
       return response.choices[0].message.content;
@@ -251,7 +344,7 @@ Provide grading in JSON format:
     }
   }
 
-  // Generate study plan
+  // Generate study plan using Grok (recommendation task)
   async generateStudyPlan(courseData, availableHoursPerWeek, studentLevel) {
     try {
       const prompt = `
@@ -279,8 +372,7 @@ Provide a week-by-week study plan in JSON format:
 }
 `;
 
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
+      const response = await this.chat({
         messages: [
           {
             role: 'system',
@@ -291,8 +383,8 @@ Provide a week-by-week study plan in JSON format:
             content: prompt
           }
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7
+        task: 'recommendation',
+        reasoning: true
       });
 
       return JSON.parse(response.choices[0].message.content);
@@ -302,11 +394,17 @@ Provide a week-by-week study plan in JSON format:
     }
   }
 
-  // Answer student questions
-  async answerQuestion(question, courseContext) {
+  // Answer student questions (supports task, reasoning, and reasoningDetails)
+  async answerQuestion(
+    question,
+    courseContext,
+    isCoding = false,
+    task = 'general',
+    reasoning = false,
+    reasoningDetails = []
+  ) {
     try {
-      const response = await this.openai.chat.completions.create({
-        model: this.model,
+      const response = await this.chat({
         messages: [
           {
             role: 'system',
@@ -317,8 +415,9 @@ Provide a week-by-week study plan in JSON format:
             content: question
           }
         ],
-        temperature: 0.7,
-        max_tokens: 500
+        task: task || (isCoding ? 'coding' : 'general'),
+        reasoning,
+        reasoningDetails
       });
 
       return response.choices[0].message.content;

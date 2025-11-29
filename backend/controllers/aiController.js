@@ -57,7 +57,7 @@ exports.getRecommendations = async (req, res) => {
       pace: 'Normal'
     };
 
-    // Get AI recommendations
+    // Get AI recommendations (Grok model via 'recommendation' task)
     const recommendations = await aiService.getStudyRecommendations(
       userId || req.user.id,
       courseId,
@@ -100,7 +100,7 @@ exports.getResourceRecommendations = async (req, res) => {
       });
     }
 
-    // Get resource recommendations
+    // Get resource recommendations (Grok model via 'recommendation' task)
     const resources = await aiService.getResourceRecommendations(
       course.title,
       course.description,
@@ -145,7 +145,7 @@ exports.analyzePerformance = async (req, res) => {
       });
     }
 
-    // Analyze performance
+    // Analyze performance (Grok model via 'recommendation' task)
     const analysis = await aiService.analyzePerformance(
       submissions,
       submissions.map(s => s.assignmentId)
@@ -187,7 +187,7 @@ exports.generateStudyPlan = async (req, res) => {
       });
     }
 
-    // Generate study plan
+    // Generate study plan (Grok model via 'recommendation' task)
     const studyPlan = await aiService.generateStudyPlan(
       {
         title: course.title,
@@ -214,12 +214,14 @@ exports.generateStudyPlan = async (req, res) => {
   }
 };
 
+
+
 // @desc    Ask AI a question
 // @route   POST /api/ai/ask
 // @access  Private
 exports.askQuestion = async (req, res) => {
   try {
-    const { question, courseId } = req.body;
+    const { question, courseId, isCoding, task, reasoning, reasoningDetails } = req.body;
 
     if (!question) {
       return res.status(400).json({
@@ -229,7 +231,6 @@ exports.askQuestion = async (req, res) => {
     }
 
     let courseContext = 'General programming and technology';
-    
     if (courseId) {
       const course = await Course.findById(courseId);
       if (course) {
@@ -237,8 +238,15 @@ exports.askQuestion = async (req, res) => {
       }
     }
 
-    // Get AI answer
-    const answer = await aiService.answerQuestion(question, courseContext);
+    // Use task/reasoning/reasoningDetails for model selection and reasoning
+    const answer = await aiService.answerQuestion(
+      question,
+      courseContext,
+      isCoding,
+      task,
+      reasoning,
+      reasoningDetails
+    );
 
     res.status(200).json({
       success: true,
@@ -257,6 +265,8 @@ exports.askQuestion = async (req, res) => {
     });
   }
 };
+
+
 
 // @desc    Pre-grade assignment (Tutor helper)
 // @route   POST /api/ai/pre-grade/:submissionId
@@ -284,7 +294,7 @@ exports.preGradeSubmission = async (req, res) => {
       });
     }
 
-    // Pre-grade using AI
+    // Pre-grade using AI (Kwaipilot for coding tasks)
     const preGrade = await aiService.preGradeSubmission(
       submission.assignmentId.description,
       submission.assignmentId.rubric,

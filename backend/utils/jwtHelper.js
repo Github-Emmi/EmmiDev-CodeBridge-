@@ -10,8 +10,11 @@ exports.generateToken = (userId) => {
 };
 
 // Send token response (cookie + JSON)
-exports.sendTokenResponse = (user, statusCode, res) => {
+exports.sendTokenResponse = async (user, statusCode, res) => {
   const token = this.generateToken(user._id);
+
+  // Populate enrolledCourses with title and thumbnail
+  const populatedUser = await user.populate('enrolledCourses', 'title thumbnail');
 
   const options = {
     expires: new Date(
@@ -29,12 +32,13 @@ exports.sendTokenResponse = (user, statusCode, res) => {
       success: true,
       token,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatarUrl: user.avatarUrl,
-        verifiedTutor: user.verifiedTutor
+        id: populatedUser._id,
+        name: populatedUser.name,
+        email: populatedUser.email,
+        role: populatedUser.role,
+        avatarUrl: populatedUser.avatarUrl,
+        verifiedTutor: populatedUser.verifiedTutor,
+        enrolledCourses: populatedUser.enrolledCourses
       }
     });
 };
